@@ -1,8 +1,124 @@
-<html>
-    <head>
-        <title>Website Title</title>
-    </head>
-    <body>
-        <h1> This is where your website html will go.</h1>
-    </body>
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Find A Place</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%93%8D%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <header class="top">
+    <div class="brand"><span>findaplace</span></div>
+  </header>
+
+  <main class="layout">
+    <aside class="side" aria-label="Controls and results">
+      <section class="block">
+        <div class="block-head">
+          <h2>Who’s meeting?</h2>
+        </div>
+        <ol class="people">
+          <li class="person" style="--pc:red;--pc-ink:white">
+            <div class="p-top"><span class="dot" aria-hidden="true">1</span><b class="p-name">Person 1</b></div>
+            <p class="p-note ok">Postcode 1</p>
+          </li>
+          <li class="person" style="--pc:blue;--pc-ink:white">
+            <div class="p-top"><span class="dot" aria-hidden="true">2</span><b class="p-name">Person 2</b></div>
+            <p class="p-note ok">Postcode 2</p>
+          </li>
+          <li class="person" style="--pc: green;--pc-ink:white">
+            <div class="p-top"><span class="dot" aria-hidden="true">3</span><b class="p-name">Person 3</b></div>
+            <p class="p-note ok">Postcode 3</p>
+          </li>
+        </ol>
+      </section>
+
+      <section class="block">
+        <div class="row">
+          <label class="field" for="venue"><span>Type of venue</span>
+            <select id="venue" name="venue">
+              <option value="restaurant">Restaurant</option>
+              <option value="cafe">Café</option>
+              <option value="park">Park</option>
+              <option value="library">Library</option>
+            </select>
+          </label>
+          <label class="field" for="rule"><span>Scoring algorithm</span>
+            <select id="rule" name="rule">
+              <option value="longest">Minimise Total Travel Time</option>
+              <option value="total">Minimise Longest Journey</option>
+              <option value="gap">Minimise Travel Time Difference</option>
+            </select>
+          </label>
+        </div>
+      </section>
+
+      <section class="block">
+        <div class="best">
+          <p class="k">Example meeting place</p>
+          <h2>Point A</h2>
+          <div class="metrics">
+            <div><span>Longest</span><b>—</b></div>
+            <div><span>Total</span><b>—</b></div>
+            <div><span>Gap</span><b>—</b></div>
+          </div>
+        </div>
+        <h3>Everyone’s journey</h3>
+        <ul class="journeys">
+          <li style="--pc:red">
+            <div class="j-top"><span class="dot sm" style="background:red;color:white">1</span>
+              <b>Person 1</b><span class="mode">Public transport</span><span class="mins">XX min</span></div>
+            <p class="legs">Postcode 1 to Point A</p>
+          </li>
+          <li style="--pc:blue">
+            <div class="j-top"><span class="dot sm" style="background:blue;color:white">2</span>
+              <b>Person 2</b><span class="mode">Public transport</span><span class="mins">XX min</span></div>
+            <p class="legs">Postcode 2 to Point A</p>
+          </li>
+          <li style="--pc:green">
+            <div class="j-top"><span class="dot sm" style="background:green;color:white">3</span>
+              <b>Person 3</b><span class="mode">Public transport</span><span class="mins">XX min</span></div>
+            <p class="legs">Postcode 3 to Point A</p>
+          </li>
+        </ul>
+        <h3>Meeting Places</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>#</th><th>Place</th><th>Time Taken</th></tr></thead>
+            <tbody>
+              <tr><td>—</td><td>Point A</td><td>—</td></tr>
+              <tr><td>—</td><td>Point B</td><td>—</td></tr>
+              <tr><td>—</td><td>Point C</td><td>—</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <h3>Nearby sample places</h3>
+        <div class="nearby-groups">
+          <details class="nearby-group">
+            <summary>Restaurants</summary>
+            <ul class="venues"><li><span>Restaurant A</span></li><li><span>Restaurant B</span></li><li><span>Restaurant C</span></li></ul>
+          </details>
+          <details class="nearby-group">
+            <summary>Cafés</summary>
+            <ul class="venues"><li><span>Cafe A</span></li><li><span>Cafe B</span></li><li><span>Cafe C</span></li></ul>
+          </details>
+          <details class="nearby-group">
+            <summary>Parks</summary>
+            <ul class="venues"><li><span>Park A</span></li><li><span>Park B</span></li><li><span>Park C</span></li></ul>
+          </details>
+          <details class="nearby-group">
+            <summary>Libraries</summary>
+            <ul class="venues"><li><span>Library A</span></li><li><span>Library B</span></li><li><span>Library C</span></li></ul>
+          </details>
+        </div>
+      </section>
+    </aside>
+
+    <section class="mapwrap" aria-label="Map placeholder">
+      <div class="map-placeholder" role="img" aria-label="Blank map placeholder"></div>
+    </section>
+  </main>
+
+</body>
 </html>
