@@ -24,19 +24,20 @@
       <section class="block">
         <div class="block-head">
           <h2>Who’s meeting?</h2>
+          <button type="button" class="add-person" id="add-person">+ Add person</button>
         </div>
         <ol class="people">
           <li class="person" style="--pc:red;--pc-ink:white">
-            <div class="p-top"><span class="dot" aria-hidden="true">1</span><b class="p-name">Person 1</b></div>
-            <p class="p-note ok">Postcode 1</p>
+            <div class="p-top"><span class="dot" aria-hidden="true">1</span><b class="p-name">Person 1</b><button type="button" class="remove-person" aria-label="Remove Person 1">Remove</button></div>
+            <input class="person-address" type="text" aria-label="Starting address for Person 1" placeholder="Enter postcode or address" autocomplete="street-address">
           </li>
           <li class="person" style="--pc:blue;--pc-ink:white">
-            <div class="p-top"><span class="dot" aria-hidden="true">2</span><b class="p-name">Person 2</b></div>
-            <p class="p-note ok">Postcode 2</p>
+            <div class="p-top"><span class="dot" aria-hidden="true">2</span><b class="p-name">Person 2</b><button type="button" class="remove-person" aria-label="Remove Person 2">Remove</button></div>
+            <input class="person-address" type="text" aria-label="Starting address for Person 2" placeholder="Enter postcode or address" autocomplete="street-address">
           </li>
           <li class="person" style="--pc: green;--pc-ink:white">
-            <div class="p-top"><span class="dot" aria-hidden="true">3</span><b class="p-name">Person 3</b></div>
-            <p class="p-note ok">Postcode 3</p>
+            <div class="p-top"><span class="dot" aria-hidden="true">3</span><b class="p-name">Person 3</b><button type="button" class="remove-person" aria-label="Remove Person 3">Remove</button></div>
+            <input class="person-address" type="text" aria-label="Starting address for Person 3" placeholder="Enter postcode or address" autocomplete="street-address">
           </li>
         </ol>
       </section>

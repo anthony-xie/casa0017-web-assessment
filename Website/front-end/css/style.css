@@ -24,7 +24,7 @@ h2, h3 { margin: 0; line-height: 1.2; }
 .block { padding: 16px 18px; border-bottom: 1px solid var(--border); }
 .block h2 { font-size: 1.05rem; }
 .block h3 { margin: 18px 0 8px; font-size: .95rem; }
-.block-head { margin-bottom: 10px; }
+.block-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
 
 .people, .journeys, .venues { margin: 0; padding: 0; list-style: none; }
 .people, .journeys, .nearby-groups { display: grid; gap: 8px; }
@@ -35,6 +35,34 @@ h2, h3 { margin: 0; line-height: 1.2; }
 .dot.sm { width: 21px; height: 21px; font-size: .72rem; }
 .p-note { margin: 4px 0 0; color: var(--muted); font-size: .84rem; }
 .p-note.ok { color: #267447; }
+
+.add-person, .remove-person {
+  padding: 5px 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--panel);
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+.add-person { color: var(--accent); font-size: .82rem; font-weight: 700; }
+.remove-person { margin-left: auto; font-size: .75rem; }
+.remove-person:disabled { cursor: not-allowed; opacity: .45; }
+.person-address {
+  width: 100%;
+  margin-top: 7px;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--panel);
+  color: var(--text);
+  font: inherit;
+  font-size: .84rem;
+}
+.add-person:focus-visible, .remove-person:focus-visible, .person-address:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
 
 .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .field { display: grid; gap: 4px; color: var(--muted); font-size: .84rem; font-weight: 700; }
