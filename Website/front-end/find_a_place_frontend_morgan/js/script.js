@@ -50,9 +50,10 @@ let personEntries = [
     }
 ];
 
-// Track the current recommendation and search state.
+// Track the current recommendation, search state, and page theme.
 let currentPlaceIndex = 0;
 let hasSearched = false;
+let isNightMode = false;
 
 const personMarkers = [];
 
@@ -368,13 +369,25 @@ const meetingMarker = L.marker(
 
 });
 
-// Show the light icon while the pointer is over the marker.
+// Use the opposite icon version while hovering over the recommended place.
 meetingMarker.on("mouseover", function () {
-    this.setIcon(createMeetingIcon("./icons/recommendedplace_light.png"));
+    this.setIcon(
+        createMeetingIcon(
+            isNightMode
+                ? "./icons/recommendedplace_dark.png"
+                : "./icons/recommendedplace_light.png"
+        )
+    );
 });
 
 meetingMarker.on("mouseout", function () {
-    this.setIcon(createMeetingIcon("./icons/recommendedplace_dark.png"));
+    this.setIcon(
+        createMeetingIcon(
+            isNightMode
+                ? "./icons/recommendedplace_light.png"
+                : "./icons/recommendedplace_dark.png"
+        )
+    );
 });
 
 // Update the recommendation card and map marker.
@@ -469,11 +482,19 @@ function returnToMapHome() {
     showHomePage();
 }
 
+// Show the correct icon version for the current theme and hover state.
+function updateIconAppearance(image) {
+    const isHovered = image.matches(":hover");
+    const showLightIcon = isNightMode ? !isHovered : isHovered;
+
+    image.src = showLightIcon ? image.dataset.light : image.dataset.dark;
+}
+
 // Set an icon's dark and light image paths.
 function setSwapIcon(image, darkSrc, lightSrc) {
     image.dataset.dark = darkSrc;
     image.dataset.light = lightSrc;
-    image.src = image.matches(":hover") ? lightSrc : darkSrc;
+    updateIconAppearance(image);
 }
 
 // Change the sidebar layout and its toggle icon.
@@ -556,11 +577,11 @@ collapsedNextButton.addEventListener("click", showNextPlace);
 // Swap dark and light icon versions while hovering.
 document.querySelectorAll(".icon-swap").forEach((icon) => {
     icon.addEventListener("pointerenter", () => {
-        icon.src = icon.dataset.light;
+        updateIconAppearance(icon);
     });
 
     icon.addEventListener("pointerleave", () => {
-        icon.src = icon.dataset.dark;
+        updateIconAppearance(icon);
     });
 });
 
@@ -578,13 +599,24 @@ closeHelpButton.addEventListener("click", () => {
 
 // Day/night button placeholder.
 // The icon changes, but the page theme is not changed yet.
-let isNightMode = false;
-
 document.getElementById("themeButton").addEventListener("click", (event) => {
     const themeButton = event.currentTarget;
     const themeIcon = themeButton.querySelector(".icon-swap");
 
     isNightMode = !isNightMode;
+
+    // Toggle the page colours and the map tile filter.
+    document.body.classList.toggle("night-mode", isNightMode);
+    map.getContainer().classList.toggle("night-map", isNightMode);
+
+    // Keep the recommended place icon in sync with the selected theme.
+    meetingMarker.setIcon(
+        createMeetingIcon(
+            isNightMode
+                ? "./icons/recommendedplace_light.png"
+                : "./icons/recommendedplace_dark.png"
+        )
+    );
 
     if (isNightMode) {
         setSwapIcon(
@@ -603,6 +635,11 @@ document.getElementById("themeButton").addEventListener("click", (event) => {
         themeButton.setAttribute("aria-label", "Switch to night mode");
         themeButton.setAttribute("title", "Switch to night mode");
     }
+
+    // Refresh every icon so its default and hover colours match the new theme.
+    document.querySelectorAll(".icon-swap").forEach((icon) => {
+        updateIconAppearance(icon);
+    });
 });
 
 // Show the home page when the application first loads.

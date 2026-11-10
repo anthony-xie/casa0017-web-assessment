@@ -284,11 +284,13 @@ p {
     font-weight: 700;
 }
 
-.add-person:hover {
+.add-person:hover,
+.remove-person:hover:not(:disabled) {
     color: var(--ucl-bright-purple);
 }
 
-.add-person:disabled {
+.add-person:disabled,
+.remove-person:disabled {
     opacity: 0.4;
     cursor: not-allowed;
 }
@@ -305,15 +307,6 @@ p {
     border: 0;
     font-size: 22px;
     line-height: 1;
-}
-
-.remove-person:hover:not(:disabled) {
-    color: var(--ucl-bright-purple);
-}
-
-.remove-person:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
 }
 
 /* Travel settings and search button */
@@ -381,7 +374,7 @@ p {
 }
 
 .recommendation {
-    padding: 15px 20px 20px 20px;
+    padding: 15px 20px 20px;
     background: var(--border);
     border: 2px solid var(--ucl-mid-purple);
     border-radius: 10px;
@@ -412,8 +405,7 @@ p {
 }
 
 .venue-description {
-    margin-bottom: 20px;
-    margin-top: 8px;
+    margin: 8px 0 20px;
     color: var(--ucl-bright-purple);
     font-size: 16px;
     font-weight: 500;
@@ -666,25 +658,19 @@ p {
 }
 
 .leaflet-popup.place-popup .map-popup > p {
-    font-size: 14px;
     color: var(--ucl-bright-purple);
+    font-size: 14px;
 }
 
 .leaflet-popup.place-popup .journey-time {
+    gap: 5px;
+    margin-top: 8px;
+    padding-top: 8px;
     font-size: 16px;
 }
 
 .leaflet-popup.place-popup .journey-time strong {
     font-size: 16px;
-}
-
-.leaflet-popup.place-popup .journey-time {
-    margin-top: 8px;
-    padding-top: 8px;
-}
-
-.leaflet-popup.place-popup .journey-time {
-    gap: 5px;
 }
 
 /* Route pop-up styles */
@@ -796,7 +782,7 @@ p {
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
-    padding: 15px 20px 10px 20px;
+    padding: 15px 20px 10px;
     background: var(--ucl-light-purple);
 }
 
@@ -825,15 +811,14 @@ p {
 .help-dialog-content {
     max-height: calc(80vh - 90px);
     overflow-y: auto;
-    padding: 15px 20px 0px 18px;
+    padding: 15px 20px 0 18px;
     font-size: 20px;
     line-height: 1.55;
 }
 
 .help-dialog-content ol {
     display: grid;
-    gap: 5
-    8px;
+    gap: 5px 8px;
     padding-left: 22px;
 }
 
@@ -855,11 +840,6 @@ p {
 /* Show the title directly on the blurred map */
 .home-title-card {
     max-width: 90%;
-    padding: 0;
-    background: transparent;
-    border: 0;
-    border-radius: 0;
-    box-shadow: none;
     text-align: center;
 }
 
@@ -871,7 +851,9 @@ p {
 }
 
 /* Keep the sidebar expanded on the home page */
-.app.home-page .toggle-button {
+/* Hide the collapse and home icons on the home page */
+.app.home-page .toggle-button,
+.app.home-page #toolHome {
     display: none;
 }
 
@@ -879,13 +861,58 @@ p {
     display: none;
 }
 
-/* Hide the collapse and home icons on the home page */
-.app.home-page .toggle-button,
-.app.home-page #toolHome {
-    display: none;
-}
-
 /* Align the remaining two icons */
 .app.home-page .tools {
     right: 10px;
+}
+
+/* Night Mode */
+/* Darken the map tiles for night mode */
+/* Darken the existing map tiles */
+#map.night-map .leaflet-tile-pane {
+    filter: invert(1) hue-rotate(180deg) brightness(0.85) contrast(0.9);
+}
+
+/* Night mode colours - some are the oppisite from the Day Mode*/
+body.night-mode {
+    --ucl-dark-purple: #ddbdff; /* Originally ucl light purple */
+    --ucl-bright-purple: #ba82ff; /* Originally ucl mid purple */
+    --ucl-mid-purple: #993bff; /* Originally ucl bright purple */
+    --ucl-light-purple: #361a54; /* Originally ucl dark purple */
+
+    --text: #ddbdff;
+    --muted: #993bff;
+    --border: #361a54;
+    --white: black;
+}
+
+/* Keep pop-ups readable in night mode */
+body.night-mode .leaflet-popup {
+    --popup-background-color: #361a54;
+    --popup-background-opacity: 0.94;
+    --popup-border-color: var(--ucl-mid-purple);
+}
+
+/* Darken the home overlay while keeping its title clear */
+body.night-mode .home-overlay {
+    background: rgba(54, 26, 84, 0.42);
+}
+
+/* Night mode brand colours */
+body.night-mode .brand-find,
+body.night-mode .brand-place {
+    color: var(--ucl-dark-purple);
+}
+
+body.night-mode .brand-a {
+    color: var(--ucl-mid-purple);
+}
+
+/* Background behind the brand and toolbar icons */
+body.night-mode .sidebar-header {
+    background-color: var(--ucl-light-purple);
+}
+
+body.night-mode .location-field input::placeholder {
+    color: rgb(150, 150, 150);
 }
