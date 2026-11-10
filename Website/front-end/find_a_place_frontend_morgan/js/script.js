@@ -1,5 +1,7 @@
+const app = document.querySelector(".app");
 const sidebar = document.getElementById("sidebar");
 const toggleButton = document.getElementById("sidebarToggle");
+const homeOverlay = document.getElementById("homeOverlay");
 const recommendation = document.getElementById("recommendation");
 const findButton = document.getElementById("findButton");
 const toolNextButton = document.getElementById("toolNext");
@@ -125,7 +127,10 @@ function syncSidebarLayout() {
         sidebar.classList.remove("collapsed");
         portraitLayoutActive = true;
     } else if (!portraitLayout.matches && portraitLayoutActive) {
-        if (wasCollapsedBeforePortrait) {
+        if (
+            wasCollapsedBeforePortrait &&
+            !app.classList.contains("home-page")
+        ) {
             sidebar.classList.add("collapsed");
         }
 
@@ -222,6 +227,11 @@ function renderPersonMarkers() {
     });
 
     personMarkers.length = 0;
+
+    // Keep the home page map clear until the user starts a search.
+    if (!hasSearched) {
+        return;
+    }
 
     personEntries.forEach((person, index) => {
         const marker = L.marker(
@@ -380,14 +390,58 @@ function updateRecommendation() {
     drawRoutes();
 }
 
+// Show the home page with an expanded sidebar and an empty map.
+function showHomePage() {
+    app.classList.add("home-page");
+    homeOverlay.hidden = false;
+
+    // Keep the sidebar expanded and reset the portrait layout state.
+    if (sidebar.classList.contains("collapsed")) {
+        setSidebarCollapsed(false);
+    }
+    wasCollapsedBeforePortrait = false;
+
+    hasSearched = false;
+    currentPlaceIndex = 0;
+    recommendation.hidden = true;
+    toolNextButton.disabled = true;
+    collapsedNextButton.disabled = true;
+    sidebar.classList.remove("has-recommendation");
+
+    // Remove people, routes, and the recommendation marker from the home map.
+    personMarkers.forEach((marker) => map.removeLayer(marker));
+    personMarkers.length = 0;
+
+    routeLayers.forEach((route) => map.removeLayer(route));
+    routeLayers.length = 0;
+
+    if (map.hasLayer(meetingMarker)) {
+        map.removeLayer(meetingMarker);
+    }
+
+    map.setView([51.512, -0.116], 13);
+    setTimeout(() => map.invalidateSize(), 280);
+}
+
+// Hide the home title when entering the map results view.
+function showMapPage() {
+    app.classList.remove("home-page");
+    homeOverlay.hidden = true;
+
+    setTimeout(() => map.invalidateSize(), 280);
+}
+
 // Show the first recommendation after the search button is clicked.
 function searchPlaces() {
+    showMapPage();
+
     hasSearched = true;
     recommendation.hidden = false;
     toolNextButton.disabled = false;
     collapsedNextButton.disabled = false;
     sidebar.classList.add("has-recommendation");
 
+    renderPersonMarkers();
     updateRecommendation();
     meetingMarker.addTo(map);
 
@@ -410,11 +464,9 @@ function showNextPlace() {
     });
 }
 
-// Return the map to its starting view.
+// Return to the home page.
 function returnToMapHome() {
-    map.flyTo([51.512, -0.116], 13, {
-        duration: 0.6
-    });
+    showHomePage();
 }
 
 // Set an icon's dark and light image paths.
@@ -472,13 +524,18 @@ function focusFirstLocation() {
 
 // Connect the sidebar toggle and navigation buttons.
 toggleButton.addEventListener("click", () => {
+    // Prevent the sidebar from collapsing while the home page is visible.
+    if (app.classList.contains("home-page")) {
+        return;
+    }
+
     const isCollapsed = !sidebar.classList.contains("collapsed");
     setSidebarCollapsed(isCollapsed);
 });
 
-document.getElementById("homeButton").addEventListener("click", (event) => {
+document.getElementById("brandRefreshLink").addEventListener("click", (event) => {
     event.preventDefault();
-    returnToMapHome();
+    window.location.reload();
 });
 
 document.getElementById("toolHome").addEventListener("click", returnToMapHome);
@@ -547,3 +604,6 @@ document.getElementById("themeButton").addEventListener("click", (event) => {
         themeButton.setAttribute("title", "Switch to night mode");
     }
 });
+
+// Show the home page when the application first loads.
+showHomePage();

@@ -836,3 +836,56 @@ p {
     8px;
     padding-left: 22px;
 }
+
+/* Home page title overlay */
+/* Blur the map behind the home page title */
+.home-overlay {
+    position: absolute;
+    z-index: 400;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    background: rgba(255, 255, 255, 0.618);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+    pointer-events: none;
+}
+
+/* Show the title directly on the blurred map */
+.home-title-card {
+    max-width: 90%;
+    padding: 0;
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    text-align: center;
+}
+
+.home-title-card h1 {
+    margin: 0;
+    color: var(--ucl-dark-purple);
+    font-size: clamp(32px, 5vw, 64px);
+    line-height: 1.1;
+}
+
+/* Keep the sidebar expanded on the home page */
+.app.home-page .toggle-button {
+    display: none;
+}
+
+.home-overlay[hidden] {
+    display: none;
+}
+
+/* Hide the collapse and home icons on the home page */
+.app.home-page .toggle-button,
+.app.home-page #toolHome {
+    display: none;
+}
+
+/* Align the remaining two icons */
+.app.home-page .tools {
+    right: 10px;
+}
