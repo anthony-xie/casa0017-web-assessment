@@ -151,6 +151,34 @@
         </section>
     </main>
 
+    <dialog class="help-dialog" id="helpDialog" aria-labelledby="helpTitle">
+        <div class="help-dialog-header">
+            <div>
+                <h2 id="helpTitle">How to use this page</h2>
+            </div>
+
+            <button class="help-close-button" id="closeHelpButton" type="button" aria-label="Close help">
+                &times;
+            </button>
+        </div>
+
+        <div class="help-dialog-content">
+            <p>
+                Find a Place helps your group explore a convenient meeting point
+                based on everyone's starting location.
+            </p>
+
+            <ol>
+                <li>Enter a postcode or location for each person.</li>
+                <li>Use “+ add person” to add someone, or “×” to remove them.</li>
+                <li>Choose your travel settings, then select “Search for a place to meet”.</li>
+                <li>Click a route to view its journey steps.</li>
+                <li>Use “Change recommendation” button to view another suggested place.</li>
+            </ol>
+
+        </div>
+    </dialog>
+
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="./js/script.js"></script>
 </body>

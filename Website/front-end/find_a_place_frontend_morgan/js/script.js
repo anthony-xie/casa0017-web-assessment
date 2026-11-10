@@ -111,6 +111,33 @@ L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
 }).addTo(map);
 
+//
+const portraitLayout = window.matchMedia(
+    "(max-width: 900px) and (orientation: portrait)"
+);
+
+let wasCollapsedBeforePortrait = false;
+let portraitLayoutActive = false;
+
+function syncSidebarLayout() {
+    if (portraitLayout.matches && !portraitLayoutActive) {
+        wasCollapsedBeforePortrait = sidebar.classList.contains("collapsed");
+        sidebar.classList.remove("collapsed");
+        portraitLayoutActive = true;
+    } else if (!portraitLayout.matches && portraitLayoutActive) {
+        if (wasCollapsedBeforePortrait) {
+            sidebar.classList.add("collapsed");
+        }
+
+        portraitLayoutActive = false;
+    }
+
+    setTimeout(() => map.invalidateSize(), 280);
+}
+
+portraitLayout.addEventListener("change", syncSidebarLayout);
+syncSidebarLayout();
+
 // Create a coloured circular icon for a person.
 function createPersonIcon(personNumber) {
     return L.divIcon({
@@ -480,9 +507,16 @@ document.querySelectorAll(".icon-swap").forEach((icon) => {
     });
 });
 
-// Help button placeholder.
+// Help button.
+const helpDialog = document.getElementById("helpDialog");
+const closeHelpButton = document.getElementById("closeHelpButton");
+
 document.getElementById("helpButton").addEventListener("click", () => {
-    alert("Website instructions and information will be added here later.");
+    helpDialog.showModal();
+});
+
+closeHelpButton.addEventListener("click", () => {
+    helpDialog.close();
 });
 
 // Day/night button placeholder.
