@@ -86,8 +86,17 @@ function drawRoutes() {
         const route = L.polyline([start, destination], {
             color: colour,
             weight: 5,
-            opacity: 0.8
+            opacity: 0.85,
+            lineCap: "round",
+            lineJoin: "round"
         }).addTo(map);
+
+        route.bindPopup(createRoutePopup(index), {
+            className: "route-popup",
+            minWidth: 300,
+            maxWidth: 300,
+            maxHeight: 250
+        });
 
         routeLayers.push(route);
     });
@@ -117,6 +126,68 @@ function createPersonIcon(personNumber) {
     });
 }
 
+// Create a popup showing a person's name and entered location.
+function createPersonPopup(person, index) {
+    const popup = document.createElement("div");
+    popup.className = "map-popup";
+
+    const name = document.createElement("strong");
+    name.textContent = `Person ${index + 1}`;
+
+    const location = document.createElement("span");
+    location.textContent = person.location.trim() || "Location not entered";
+
+    popup.append(name, location);
+    return popup;
+}
+
+// Create a popup with the same recommendation details shown in the sidebar.
+function createRecommendationPopup(place) {
+    const popup = document.createElement("div");
+    popup.className = "map-popup";
+
+    const label = document.createElement("span");
+    label.className = "map-popup-label";
+    label.textContent = "recommended meeting point";
+
+    const name = document.createElement("strong");
+    name.textContent = place.name;
+
+    const description = document.createElement("p");
+    description.textContent = place.description;
+
+    popup.append(label, name, description);
+
+    // Copy the journey information from the sidebar into the popup.
+    const journeyInfo = document.querySelector(".journey-time");
+    if (journeyInfo) {
+        popup.append(journeyInfo.cloneNode(true));
+    }
+
+    return popup;
+}
+
+// Create a popup showing the example journey steps for one person.
+function createRoutePopup(index) {
+    const popup = document.createElement("div");
+    popup.className = "map-popup";
+
+    const heading = document.createElement("strong");
+    heading.textContent = `Directions for Person ${index + 1}`;
+
+    const walkingStart = document.createElement("span");
+    walkingStart.textContent = "Walk · 5 min";
+
+    const underground = document.createElement("span");
+    underground.textContent = "Underground · 3 stops · 7 min";
+
+    const walkingEnd = document.createElement("span");
+    walkingEnd.textContent = "Walk · 6 min";
+
+    popup.append(heading, walkingStart, underground, walkingEnd);
+    return popup;
+}
+
 // Rebuild the map markers to match the current people list.
 function renderPersonMarkers() {
     personMarkers.forEach((marker) => {
@@ -131,7 +202,13 @@ function renderPersonMarkers() {
             { icon: createPersonIcon(index + 1) }
         )
             .addTo(map)
-            .bindPopup(`Person ${index + 1}`);
+            .bindPopup(createPersonPopup(person, index), {
+                className: "person-popup",
+                minWidth: 150,
+                maxWidth: 150,
+                maxHeight: 100
+
+            });
 
         personMarkers.push(marker);
     });
@@ -171,6 +248,9 @@ function renderPersonFields() {
 
         input.addEventListener("input", () => {
             person.location = input.value;
+            personMarkers[index]?.setPopupContent(
+                createPersonPopup(person, index)
+            );
         });
 
         const removeButton = document.createElement("button");
@@ -233,7 +313,7 @@ function createMeetingIcon(iconPath = "./icons/recommendedplace_dark.png") {
     return L.icon({
         iconUrl: iconPath,
         iconSize: [36, 58],
-        iconAnchor: [26, 46],
+        iconAnchor: [18, 58],
         popupAnchor: [0, -46],
         className: "recommended-place-icon"
     });
@@ -243,7 +323,13 @@ function createMeetingIcon(iconPath = "./icons/recommendedplace_dark.png") {
 const meetingMarker = L.marker(
     places[currentPlaceIndex].coordinates,
     { icon: createMeetingIcon() }
-).bindPopup(`Recommended Place (${currentPlaceIndex + 1})`);
+).bindPopup(createRecommendationPopup(places[currentPlaceIndex]), {
+    className: "place-popup",
+    minWidth: 400,
+    maxWidth: 400,
+    maxHeight: 250
+
+});
 
 // Show the light icon while the pointer is over the marker.
 meetingMarker.on("mouseover", function () {
@@ -262,9 +348,7 @@ function updateRecommendation() {
     document.getElementById("venueDescription").textContent = place.description;
 
     meetingMarker.setLatLng(place.coordinates);
-    meetingMarker.setPopupContent(
-        `Recommended Place (${currentPlaceIndex + 1})`
-    );
+    meetingMarker.setPopupContent(createRecommendationPopup(place));
 
     drawRoutes();
 }

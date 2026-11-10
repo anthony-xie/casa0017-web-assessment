@@ -582,3 +582,135 @@ p {
 .sidebar.collapsed.has-recommendation #toolNextCollapsed {
     display: flex;
 }
+
+/* Pop-up window on the map */
+/* Shared pop-up styles */
+.leaflet-popup {
+    --popup-background-color: var(--white);
+    --popup-background-opacity: 0.85;
+    --popup-border-color: var(--ucl-mid-purple);
+}
+
+.leaflet-popup-content-wrapper {
+    background-color: var(--popup-background-color);
+    background-color: rgb(
+        from var(--popup-background-color)
+        r g b / var(--popup-background-opacity)
+    );
+    border: 2px solid var(--popup-border-color);
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(54, 26, 84, 0.18);
+}
+
+.leaflet-popup-tip {
+    background-color: var(--popup-background-color);
+    background-color: rgb(
+        from var(--popup-background-color)
+        r g b / var(--popup-background-opacity)
+    );
+}
+
+.leaflet-popup-content {
+    margin: 14px 16px;
+    color: var(--ucl-dark-purple);
+    font-size: 16px;
+    line-height: 1.5;
+}
+
+.map-popup {
+    display: flex;
+    min-width: 160px;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.map-popup p {
+    margin: 0;
+}
+
+/* Person pop-up styles */
+.leaflet-popup.person-popup {
+    --popup-background-color: var(--white);
+    --popup-background-opacity: 0.85;
+    --popup-border-color: var(--ucl-mid-purple);
+}
+
+.leaflet-popup.person-popup .map-popup strong {
+    font-size: 18px;
+}
+
+.leaflet-popup.person-popup .map-popup span {
+    font-size: 15px;
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+
+/* Recommended place pop-up styles */
+.leaflet-popup.place-popup {
+    --popup-background-color: var(--border);
+    --popup-background-opacity: 0.85;
+    --popup-border-color: var(--ucl-mid-purple);
+}
+
+.leaflet-popup.place-popup .map-popup {
+    min-width: 280px;
+}
+
+.leaflet-popup.place-popup .map-popup-label {
+    color: var(--muted);
+    font-size: 14px;
+}
+
+.leaflet-popup.place-popup .map-popup > strong {
+    font-size: 20px;
+}
+
+.leaflet-popup.place-popup .map-popup > p {
+    font-size: 14px;
+    color: var(--ucl-bright-purple);
+}
+
+.leaflet-popup.place-popup .journey-time {
+    font-size: 16px;
+}
+
+.leaflet-popup.place-popup .journey-time strong {
+    font-size: 16px;
+}
+
+.leaflet-popup.place-popup .journey-time {
+    margin-top: 8px;
+    padding-top: 8px;
+}
+
+.leaflet-popup.place-popup .journey-time {
+    gap: 5px;
+}
+
+/* Route pop-up styles */
+.leaflet-popup.route-popup {
+    --popup-background-color: var(--white);
+    --popup-background-opacity: 0.85;
+    --popup-border-color: var(--ucl-mid-purple);
+}
+
+.leaflet-popup.route-popup .map-popup {
+    min-width: 280px;
+}
+
+.leaflet-popup.route-popup .map-popup strong {
+    font-size: 18px;
+}
+
+.leaflet-popup.route-popup .map-popup span {
+    font-size: 16px;
+}
+
+/* Keep long place and route pop-ups scrollable */
+.leaflet-popup.place-popup .leaflet-popup-content,
+.leaflet-popup.route-popup .leaflet-popup-content {
+    max-height: 260px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+}
