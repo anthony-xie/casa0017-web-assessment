@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>find a place</title>
+
+    <!-- font for the brand -->
+    <link href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@900&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <link rel="stylesheet" href="./css/style.css">
+</head>
+
+<body>
+    <main class="app">
+        <aside class="sidebar" id="sidebar">
+            <header class="sidebar-header">
+                <a class="brand" href="#" id="homeButton" title="Return to map">
+
+                    <!-- brand name with different colors -->
+                    <span class="brand-name">
+                        <span class="brand-find">find</span>
+                        <span class="brand-a">a</span>
+                        <span class="brand-place">place</span>
+                    </span>
+                </a>
+
+                <button class="toggle-button" id="sidebarToggle" type="button" aria-label="Collapse sidebar"
+                    title="Collapse sidebar">
+                    <img class="icon-swap icon-image" src="./icons/collapse_dark.png"
+                        data-dark="./icons/collapse_dark.png" data-light="./icons/collapse_light.png" alt="">
+                </button>
+            </header>
+
+            <nav class="tools" aria-label="Main tools">
+                <button class="tool-button active" id="toolHome" type="button" aria-label="Return to homepage"
+                    title="Return to homepage">
+                    <span class="tool-icon">
+                        <img class="icon-swap icon-image" src="./icons/home_dark.png" data-dark="./icons/home_dark.png"
+                            data-light="./icons/home_light.png" alt="">
+                    </span>
+                </button>
+
+                <button class="tool-button" id="toolEdit" type="button" title="Edit locations">
+                    <span class="tool-icon">
+                        <img class="icon-swap icon-image" src="./icons/edit_dark.png" data-dark="./icons/edit_dark.png"
+                            data-light="./icons/edit_light.png" alt="">
+                    </span>
+                    <span class="tool-label">edit locations</span>
+                </button>
+
+                <button class="tool-button" id="toolNextCollapsed" type="button" aria-label="Change recommendation"
+                    title="Change recommendation">
+                    <span class="tool-icon">
+                        <img class="icon-swap icon-image" src="./icons/changeplace_dark.png"
+                            data-dark="./icons/changeplace_dark.png" data-light="./icons/changeplace_light.png" alt="">
+                    </span>
+                </button>
+
+                <button class="tool-button" id="helpButton" type="button" aria-label="Help and website information"
+                    title="Help and website information">
+                    <span class="tool-icon">
+                        <img class="icon-swap icon-image" src="./icons/questionmark_dark.png"
+                            data-dark="./icons/questionmark_dark.png" data-light="./icons/questionmark_light.png"
+                            alt="">
+                    </span>
+                </button>
+
+                <button class="tool-button" id="themeButton" type="button" aria-label="Switch to night mode"
+                    title="Switch to night mode">
+                    <span class="tool-icon">
+                        <img class="icon-swap icon-image" src="./icons/nightmode_dark.png"
+                            data-dark="./icons/nightmode_dark.png" data-light="./icons/nightmode_light.png" alt="">
+                    </span>
+                </button>
+            </nav>
+
+            <div class="sidebar-content">
+                <section class="section" id="locationsSection">
+                    <div class="section-heading">
+                        <div>
+                            <h1>your group</h1>
+                        </div>
+                        <span class="people-count" id="peopleCount">1 person</span>
+                    </div>
+
+                    <div id="peopleList"></div>
+
+                    <!-- Add person button -->
+                    <button class="add-person" id="addPerson" type="button">
+                        + add person
+                    </button>
+
+                </section>
+
+                <section class="section preferences">
+                    <h2>travel settings</h2>
+
+                    <label class="select-label" for="transportMode">travel by</label>
+                    <select id="transportMode">
+                        <option>public transport</option>
+                        <option>walking</option>
+                        <option>driving</option>
+                    </select>
+                </section>
+
+                <!-- Search button -->
+                <button class="primary-button search-button" id="findButton" type="button">
+                    search for a place to meet<span>➤</span>
+                </button>
+
+                <!-- Recommendation section -->
+                <section class="recommendation" id="recommendation" hidden>
+                    <div class="recommendation-heading">
+                        <p class="recommendation-label">recommended meeting point</p>
+
+                        <button class="recommendation-next-button" id="toolNext" type="button"
+                            aria-label="Change recommendation" title="Change recommendation" disabled>
+                            <img class="icon-swap icon-image" src="./icons/changeplace_dark.png"
+                                data-dark="./icons/changeplace_dark.png" data-light="./icons/changeplace_light.png"
+                                alt="">
+                        </button>
+                    </div>
+
+                    <h2 id="venueName">The place to meet</h2>
+                    <p class="venue-description" id="venueDescription">
+                        Mon-Sun: 10:00 AM - 10:00 PM.
+                    </p>
+
+                    <div class="journey-time">
+                        <span>estimated journeys</span>
+                        <strong id="arrivalTime">arrival time: 12:34</strong>
+                    </div>
+                </section>
+            </div>
+
+        </aside>
+
+        <section class="map-panel" aria-label="Map">
+            <div id="map"></div>
+        </section>
+    </main>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="./js/script.js"></script>
+</body>
+
+</html>

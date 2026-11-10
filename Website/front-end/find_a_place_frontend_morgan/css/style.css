@@ -1,0 +1,601 @@
+:root {
+    --ucl-dark-purple: #361a54;
+    --ucl-bright-purple: #993bff;
+    --ucl-mid-purple: #ba82ff;
+    --ucl-light-purple: #ddbdff;
+
+    --text: #361a54;
+    --muted: #766c80;
+    --border: #eee7f5;
+    --white: #ffffff;
+
+    --sidebar-width: 38.2%;
+    --sidebar-min-width: 450px;
+    --collapsed-width: 60px;
+
+    --person-1: #BD655F; /* Brick Red */
+    --person-2: #76BE9B; /* Mint Green */
+    --person-3: #997459; /* Cocoa Brown */
+    --person-4: #8DBEDC; /* Sky Blue */
+    --person-5: #D6B94D; /* Mustard Yellow */
+    --person-6: #4F999B; /* Teal */
+    --person-7: #F0A5A0; /* Peach Pink */
+    --person-8: #81964C; /* Olive Green */
+    --person-9: #527EAD; /* Denim Blue */
+    --person-10: #DB934A; /* Caramel Orange */
+}
+
+/* Basic page layout */
+* {
+    box-sizing: border-box;
+}
+
+body {
+    min-width: 320px;
+    min-height: 100vh;
+    margin: 0;
+    color: var(--text);
+    background: var(--white);
+    font-family: Arial, sans-serif;
+    font-size: 25px;
+}
+
+button,
+input,
+select {
+    font: inherit;
+}
+
+button {
+    cursor: pointer;
+}
+
+.app {
+    display: flex;
+    width: 100%;
+    height: 100vh;
+    min-height: 600px;
+    overflow: hidden;
+}
+
+/* Sidebar and brand */
+.sidebar {
+    position: relative;
+    z-index: 500;
+    display: flex;
+    flex: 0 0 var(--sidebar-width);
+    flex-direction: column;
+    min-width: var(--sidebar-min-width);
+    background: var(--white);
+    transition: flex-basis 0.25s ease, min-width 0.25s ease;
+}
+
+.sidebar-header {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 70px;
+    padding: 0 10px;
+    background: var(--ucl-light-purple);
+}
+
+.brand {
+    color: var(--text);
+    font-family: "Libre Franklin", sans-serif;
+    text-decoration: none;
+}
+
+.brand-name {
+    display: inline-flex;
+    align-items: center;
+    font-size: 40px;
+    font-weight: 600;
+}
+
+.brand-find,
+.brand-place {
+    color: var(--ucl-dark-purple);
+}
+
+.brand-a {
+    color: var(--ucl-bright-purple);
+}
+
+/* Sidebar buttons and icons */
+.toggle-button {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    color: var(--ucl-dark-purple);
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+}
+
+.toggle-button:hover {
+    background: transparent;
+}
+
+.tools {
+    position: absolute;
+    z-index: 2;
+    top: 15px;
+    right: 58px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0;
+    border: 0;
+}
+
+.tool-button {
+    display: flex;
+    flex: 0 0 40px;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    min-height: 40px;
+    padding: 0;
+    color: var(--muted);
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    text-align: left;
+    white-space: nowrap;
+}
+
+/* From left to right when expanded：Home、Day/Night、Help */
+#toolHome {
+    order: 1;
+}
+
+#themeButton {
+    order: 2;
+}
+
+#helpButton {
+    order: 3;
+}
+
+.tool-button:hover,
+.tool-button.active {
+    color: var(--ucl-dark-purple);
+    background: transparent;
+}
+
+.tool-button.active {
+    font-weight: 700;
+}
+
+.tool-button:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.tool-icon {
+    display: grid;
+    flex: 0 0 30px;
+    place-items: center;
+    font-size: 21px;
+}
+
+.tool-label {
+    font-size: 25px;
+}
+
+/* Sidebar content and participant fields */
+.sidebar-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 22px 20px;
+}
+
+.section {
+    margin-bottom: 22px;
+}
+
+.section-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 15px;
+}
+
+h1,
+h2,
+p {
+    margin-top: 0;
+}
+
+.section-heading h1,
+.section h2,
+.recommendation h2 {
+    margin-bottom: 0;
+    font-size: 25px;
+}
+
+.people-count {
+    padding: 6px 9px;
+    color: var(--ucl-dark-purple);
+    background: var(--ucl-light-purple);
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+.location-field {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 55px;
+    margin-bottom: 9px;
+    padding: 9px 11px;
+    background: var(--white);
+    border: 2px solid var(--ucl-light-purple);
+    border-radius: 10px;
+}
+
+.location-field:focus-within {
+    border-color: var(--ucl-mid-purple);
+    box-shadow: 0 0 0 3px var(--ucl-light-purple);
+}
+
+.person-dot {
+    flex: 0 0 18px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+}
+
+.person-dot,
+.person-marker {
+    background: var(--person-colour);
+}
+
+.field-content {
+    display: flex;
+    min-width: 0;
+    flex: 1;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.person-name {
+    color: var(--ucl-dark-purple);
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.location-field input {
+    width: 100%;
+    padding: 0;
+    color: var(--ucl-dark-purple);
+    background: transparent;
+    border: 0;
+    outline: 0;
+    font-size: 16px;
+    font-weight: 500;
+}
+
+.location-field input::placeholder {
+    opacity: 0.4;
+}
+
+.add-person {
+    padding: 3px 0;
+    color: var(--ucl-dark-purple);
+    background: transparent;
+    border: 0;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.add-person:hover {
+    color: var(--ucl-bright-purple);
+}
+
+.add-person:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.remove-person {
+    display: grid;
+    flex: 0 0 28px;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    color: var(--muted);
+    background: transparent;
+    border: 0;
+    font-size: 22px;
+    line-height: 1;
+}
+
+.remove-person:hover:not(:disabled) {
+    color: var(--ucl-bright-purple);
+}
+
+.remove-person:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* Travel settings and search button */
+.preferences {
+    padding-top: 18px;
+    border-top: 2px solid var(--ucl-light-purple);
+}
+
+.select-label {
+    display: block;
+    margin: 12px 0 6px;
+    color: var(--muted);
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.preferences select {
+    width: 100%;
+    height: 40px;
+    padding: 0 10px;
+    color: var(--text);
+    background: var(--white);
+    border: 2px solid var(--ucl-light-purple);
+    border-radius: 100px;
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.preferences select:focus {
+    outline: none;
+    border-color: var(--ucl-bright-purple);
+    box-shadow: 0 0 0 3px var(--ucl-light-purple);
+}
+
+.primary-button {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    min-height: 42px;
+    padding: 0 12px;
+    color: var(--white);
+    background: var(--ucl-dark-purple);
+    border: 0;
+    border-radius: 100px;
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.primary-button:hover {
+    background: var(--ucl-bright-purple);
+}
+
+.search-button {
+    margin: 0 0 16px;
+}
+
+.primary-button span {
+    font-size: 18px;
+}
+
+/* Recommended meeting point */
+.recommendation[hidden] {
+    display: none;
+}
+
+.recommendation {
+    padding: 16px;
+    background: var(--border);
+    border: 2px solid var(--ucl-mid-purple);
+    border-radius: 12px;
+}
+
+.recommendation-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.recommendation-heading .recommendation-label {
+    margin-bottom: 0;
+}
+
+.recommendation-label {
+    margin-bottom: 10px;
+    color: var(--muted);
+    font-size: 16px;
+    font-weight: 500;
+}
+
+.recommendation-next-button {
+    display: grid;
+    flex: 0 0 40px;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    background: transparent;
+    border: 0;
+}
+
+.recommendation h2 {
+    margin-bottom: 6px;
+}
+
+.venue-description {
+    margin-bottom: 12px;
+    color: var(--ucl-bright-purple);
+    font-size: 16px;
+    font-weight: 500;
+}
+
+.journey-time {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    padding-top: 10px;
+    color: var(--muted);
+    border-top: 2px solid var(--ucl-mid-purple);
+    font-size: 16px;
+}
+
+.journey-time strong {
+    color: var(--ucl-bright-purple);
+}
+
+/* Map and markers */
+.map-panel {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+    background: var(--white);
+}
+
+#map {
+    position: absolute;
+    z-index: 1;
+    inset: 0;
+}
+
+.person-marker {
+    width: 36px;
+    height: 36px;
+    border: 5px solid var(--ucl-dark-purple);
+    border-radius: 50%;
+    box-shadow: 0 2px 8px #361a5438;
+}
+
+.recommended-place-icon {
+    filter: drop-shadow(0 2px 8px #361a5438);
+}
+
+.next-place-button {
+    display: flex;
+    align-items: center;
+}
+
+.next-place-button:hover:not(:disabled) {
+    background: var(--ucl-light-purple);
+}
+
+/* Collapsed sidebar */
+.sidebar.collapsed {
+    flex-basis: var(--collapsed-width);
+    min-width: var(--collapsed-width);
+    background: var(--ucl-light-purple);
+}
+
+.sidebar.collapsed .sidebar-header {
+    position: static;
+    justify-content: center;
+    padding: 0 5px;
+}
+
+.sidebar.collapsed .sidebar-content,
+.sidebar.collapsed .tool-label {
+    display: none;
+}
+
+.sidebar.collapsed .brand {
+    position: absolute;
+    z-index: 3;
+    bottom: 100px;
+    left: 50%;
+    display: block;
+    white-space: nowrap;
+    transform: translateX(-50%) rotate(-90deg);
+    transform-origin: center;
+}
+
+.sidebar.collapsed .brand-name {
+    font-size: 40px;
+}
+
+.sidebar.collapsed .tools {
+    position: static;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    padding: 10px 5px;
+    border: 0;
+}
+
+/* Keep the original icon order while the sidebar is collapsed */
+.sidebar.collapsed #toolHome,
+.sidebar.collapsed #themeButton,
+.sidebar.collapsed #helpButton {
+    order: 0;
+}
+
+.sidebar.collapsed .tool-button {
+    justify-content: center;
+    width: 40px;
+    min-height: 40px;
+    padding: 0;
+}
+
+/* Responsive layout */
+@media (max-width: 900px) {
+    :root {
+        --sidebar-width: 40%;
+    }
+
+    .sidebar-content {
+        padding-right: 16px;
+        padding-left: 16px;
+    }
+}
+
+@media (max-width: 650px) {
+    .sidebar {
+        flex-basis: min(82vw, 400px);
+    }
+
+    .sidebar.collapsed {
+        flex-basis: var(--collapsed-width);
+        min-width: var(--collapsed-width);
+    }
+
+    .map-header {
+        top: 10px;
+        right: 10px;
+    }
+}
+
+/* Hide Edit locations while expanded; keep its icon when collapsed */
+.sidebar:not(.collapsed) #toolEdit {
+    display: none;
+}
+
+/* Keep Next place hidden until a search has been completed */
+#mapNext[hidden] {
+    display: none;
+}
+
+/* Icon image sizing and alignment */
+.icon-image {
+    display: block;
+    object-fit: contain;
+}
+
+.tool-icon .icon-image,
+.toggle-button .icon-image,
+.recommendation-next-button .icon-image {
+    width: 40px;
+    height: 40px;
+}
+
+#toolNextCollapsed {
+    display: none;
+}
+
+.sidebar.collapsed.has-recommendation #toolNextCollapsed {
+    display: flex;
+}
