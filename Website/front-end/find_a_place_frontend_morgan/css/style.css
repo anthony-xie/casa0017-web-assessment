@@ -217,14 +217,6 @@ p {
     font-size: 25px;
 }
 
-.people-count {
-    padding: 6px 9px;
-    color: var(--ucl-dark-purple);
-    background: var(--ucl-light-purple);
-    border-radius: 8px;
-    font-size: 14px;
-}
-
 .location-field {
     display: flex;
     align-items: center;
@@ -238,7 +230,7 @@ p {
 }
 
 .location-field:focus-within {
-    border-color: var(--ucl-mid-purple);
+    border-color: var(--ucl-bright-purple);
     box-shadow: 0 0 0 3px var(--ucl-light-purple);
 }
 
@@ -305,10 +297,10 @@ p {
     display: grid;
     flex: 0 0 28px;
     place-items: center;
-    width: 28px;
-    height: 28px;
+    width: 32px;
+    height: 32px;
     padding: 0;
-    color: var(--muted);
+    color: var(--ucl-dark-purple);
     background: transparent;
     border: 0;
     font-size: 22px;
@@ -345,7 +337,7 @@ p {
     color: var(--text);
     background: var(--white);
     border: 2px solid var(--ucl-light-purple);
-    border-radius: 100px;
+    border-radius: 10px;
     font-size: 16px;
     font-weight: 700;
 }
@@ -366,7 +358,7 @@ p {
     color: var(--white);
     background: var(--ucl-dark-purple);
     border: 0;
-    border-radius: 100px;
+    border-radius: 10px;
     font-size: 16px;
     font-weight: 700;
 }
@@ -389,21 +381,16 @@ p {
 }
 
 .recommendation {
-    padding: 16px;
+    padding: 15px 20px 20px 20px;
     background: var(--border);
     border: 2px solid var(--ucl-mid-purple);
-    border-radius: 12px;
+    border-radius: 10px;
 }
 
 .recommendation-heading {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 10px;
-}
-
-.recommendation-heading .recommendation-label {
-    margin-bottom: 0;
 }
 
 .recommendation-label {
@@ -424,12 +411,9 @@ p {
     border: 0;
 }
 
-.recommendation h2 {
-    margin-bottom: 6px;
-}
-
 .venue-description {
-    margin-bottom: 12px;
+    margin-bottom: 20px;
+    margin-top: 8px;
     color: var(--ucl-bright-purple);
     font-size: 16px;
     font-weight: 500;
@@ -438,8 +422,8 @@ p {
 .journey-time {
     display: flex;
     flex-direction: column;
-    gap: 5px;
-    padding-top: 10px;
+    gap: 10px;
+    padding-top: 20px;
     color: var(--muted);
     border-top: 2px solid var(--ucl-mid-purple);
     font-size: 16px;

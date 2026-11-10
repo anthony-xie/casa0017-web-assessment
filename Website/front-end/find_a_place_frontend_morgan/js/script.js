@@ -5,7 +5,6 @@ const findButton = document.getElementById("findButton");
 const toolNextButton = document.getElementById("toolNext");
 const collapsedNextButton = document.getElementById("toolNextCollapsed");
 const peopleList = document.getElementById("peopleList");
-const peopleCount = document.getElementById("peopleCount");
 const addPersonButton = document.getElementById("addPerson");
 
 // Example recommendations and their map coordinates.
@@ -64,6 +63,35 @@ collapsedNextButton.disabled = true;
 const map = L.map("map", {
     zoomControl: false
 }).setView([51.512, -0.116], 13);
+
+// Route Drawing
+const routeLayers = [];
+
+function drawRoutes() {
+    // Remove existing routes before drawing new ones.
+    routeLayers.forEach((route) => map.removeLayer(route));
+    routeLayers.length = 0;
+
+    const destination = places[currentPlaceIndex].coordinates;
+
+    personEntries.forEach((person, index) => {
+        const start = virtualLocations[person.virtualLocationIndex];
+
+        if (!start) return;
+
+        const colour = getComputedStyle(document.documentElement)
+            .getPropertyValue(`--person-${index + 1}`)
+            .trim();
+
+        const route = L.polyline([start, destination], {
+            color: colour,
+            weight: 5,
+            opacity: 0.8
+        }).addTo(map);
+
+        routeLayers.push(route);
+    });
+}
 
 L.control.zoom({
     position: "bottomleft"
@@ -165,11 +193,6 @@ function renderPersonFields() {
         peopleList.append(row);
     });
 
-    peopleCount.textContent =
-        personEntries.length === 1
-            ? "1 person"
-            : `${personEntries.length} people`;
-
     addPersonButton.disabled = personEntries.length >= 10;
 
     renderPersonMarkers();
@@ -242,6 +265,8 @@ function updateRecommendation() {
     meetingMarker.setPopupContent(
         `Recommended Place (${currentPlaceIndex + 1})`
     );
+
+    drawRoutes();
 }
 
 // Show the first recommendation after the search button is clicked.
