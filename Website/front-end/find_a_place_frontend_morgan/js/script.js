@@ -122,7 +122,7 @@ function createPersonIcon(personNumber) {
             </div>
         `,
         iconSize: [36, 36],
-        iconAnchor: [18, 18]
+        iconAnchor: [13, 15]
     });
 }
 
