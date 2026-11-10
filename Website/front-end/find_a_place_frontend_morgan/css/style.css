@@ -714,3 +714,73 @@ p {
     overscroll-behavior: contain;
     scrollbar-width: thin;
 }
+
+/* Stack the header, map, and menu in portrait layouts */
+@media (max-width: 900px) and (orientation: portrait) {
+    .app {
+        position: relative;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: 60px minmax(280px, 42vh) minmax(0, 1fr);
+        height: 100dvh;
+        min-height: 0;
+        overflow: hidden;
+    }
+
+    .sidebar {
+        display: contents;
+    }
+
+    .sidebar-header {
+        grid-row: 1;
+        height: 60px;
+        justify-content: space-between;
+        padding: 0 10px;
+    }
+
+    .toggle-button {
+        display: none;
+    }
+
+    /* Keep the existing icon order and spacing */
+    .tools {
+        right: 16px;
+    }
+
+    #toolEdit,
+    #toolNextCollapsed {
+        display: none;
+    }
+
+    .sidebar-content {
+        grid-row: 3;
+        min-height: 0;
+        flex: none;
+        overflow-y: auto;
+        padding: 18px 16px;
+        background: var(--white);
+        border-top: 1px solid var(--border);
+    }
+
+    .map-panel {
+        grid-row: 2;
+        width: 100%;
+        min-width: 0;
+        min-height: 280px;
+        flex: none;
+    }
+
+    /* Keep the full sidebar visible if it was collapsed before resizing */
+    .sidebar.collapsed .brand,
+    .sidebar.collapsed .sidebar-content {
+        display: block;
+    }
+
+    .sidebar.collapsed .sidebar-header {
+        justify-content: space-between;
+    }
+
+    .sidebar.collapsed .tools {
+        padding: 0;
+    }
+}
