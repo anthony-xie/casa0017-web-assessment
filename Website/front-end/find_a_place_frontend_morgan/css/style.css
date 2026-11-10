@@ -37,7 +37,6 @@ body {
     color: var(--text);
     background: var(--white);
     font-family: Arial, sans-serif;
-    font-size: 25px;
 }
 
 button,
@@ -76,7 +75,7 @@ button {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    height: 70px;
+    height: 60px;
     padding: 0 10px;
     background: var(--ucl-light-purple);
 }
@@ -123,7 +122,7 @@ button {
 .tools {
     position: absolute;
     z-index: 2;
-    top: 15px;
+    top: 10px;
     right: 58px;
     display: flex;
     align-items: center;
@@ -465,9 +464,9 @@ p {
 }
 
 .person-marker {
-    width: 36px;
-    height: 36px;
-    border: 5px solid var(--ucl-dark-purple);
+    width: 25px;
+    height: 25px;
+    border: 3px solid var(--ucl-dark-purple);
     border-radius: 50%;
     box-shadow: 0 2px 8px #361a5438;
 }
