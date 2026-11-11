@@ -525,12 +525,15 @@ html, body {
 }
 
 /* The place picked in the list: a bit bigger, growing from the tip of the pin */
-.place-pin {
-    transition: scale 200ms ease-out;
+.place-pin-scale {
+    width: 30px;
+    height: 30px;
+    transform-origin: 50% 120%; /* the tip of the pin */
+    transition: transform 200ms ease-out;
 }
 
-.place-pin-selected .place-pin {
-    scale: 1.35; /* keep in sync with SELECTED_PIN_SCALE in scripts.js */
+.place-pin-selected .place-pin-scale {
+    transform: scale(1.35); /* keep in sync with SELECTED_PIN_SCALE in scripts.js */
 }
 
 @keyframes place-pop {

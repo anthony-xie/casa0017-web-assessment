@@ -226,9 +226,12 @@ function placePinIcon(kind) {
     const type = PLACE_TYPES[kind];
     return L.divIcon({
         className: '',
-        html: `<div class="place-pin">
-                   <div class="place-pin-body" style="background:${type.color}">
-                       <i class="bi ${type.icon}" aria-hidden="true"></i>
+        // CHANGED: extra outer div (place-pin-scale) that is scaled when the place is selected
+        html: `<div class="place-pin-scale" style="width:30px;height:30px;transform-origin:50% 120%;transition:transform 200ms ease-out">
+                   <div class="place-pin">
+                       <div class="place-pin-body" style="background:${type.color}">
+                           <i class="bi ${type.icon}" aria-hidden="true"></i>
+                       </div>
                    </div>
                </div>`,
         iconSize: [30, 30],
@@ -237,14 +240,16 @@ function placePinIcon(kind) {
     });
 }
 
-// The selected place's pin is drawn this much bigger (must match .place-pin-selected in style.css)
+// The selected place's pin is drawn this much bigger
 const SELECTED_PIN_SCALE = 1.35;
 const PIN_HEIGHT = 36; // from the tip of the pin to its top, in px (same as iconAnchor y)
 
 // Make one pin bigger (or normal size again). The pin grows from its tip, so it stays on the same spot.
 function setPinSelected(item, selected) {
+    // CHANGED: scale the pin directly from JS (works in every browser, needs no CSS rule)
     const el = item.marker.getElement();
-    if (el) el.classList.toggle('place-pin-selected', selected);
+    const pin = el ? el.querySelector('.place-pin-scale') : null;
+    if (pin) pin.style.transform = selected ? `scale(${SELECTED_PIN_SCALE})` : '';
 
     // Keep the selected pin above the others
     item.marker.setZIndexOffset(selected ? 1000 : 0);
