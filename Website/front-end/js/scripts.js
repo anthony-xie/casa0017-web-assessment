@@ -30,6 +30,22 @@ const PLACE_TYPES = {
 // One fixed colour per person (by their row in the form), checked for colour-blind safety.
 // Never cycled: MAX_PEOPLE is 6, so there is always a colour.
 const PERSON_COLORS = ['#2a78d6', '#d95926', '#1baf7a', '#6250d6', '#d55181', '#c98500'];
+
+// Fix for the SnakeAnim plugin: Leaflet rounds points to whole pixels, so two route points
+// can sit on the same pixel. If no time has passed yet the plugin then does 0 / 0 and throws
+// "Invalid LatLng object: (NaN, NaN)", and that line is drawn without animation.
+// Always moving forward at least 1 ms worth of distance avoids the 0 / 0.
+L.Polyline.include({
+    _snake() {
+        const now = performance.now();
+        const diff = Math.max(1, now - this._snakingTime);   // never 0
+        const forward = diff * this.options.snakingSpeed / 1000;
+        this._snakingTime = now;
+        this._latlngs[this._snakingRings].pop();
+        return this._snakeForward(forward);
+    }
+});
+
 // Same teardrop shape and size as Leaflet's default blue marker, in any colour
 function personPinIcon(color) {
     return L.divIcon({
@@ -71,6 +87,10 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 }).addTo(map);
 
 const resultLayer = L.featureGroup().addTo(map);
+const routeLayer = L.featureGroup().addTo(map); // route lines + their hover areas, redrawn per place
+
+let routeToken = 0;     // goes up each time routes are redrawn; cancels older route animations
+let searchState = null; // { locations, colors } of the current search, used to redraw routes
 const placesLayer = L.layerGroup().addTo(map);
 const userLayer = L.layerGroup().addTo(map); // "my location" dot, kept separate from results
 
@@ -361,17 +381,37 @@ function highlightPlace(item) {
 }
 
 // Picks a place: from the list (fly to it) or from the map (scroll the list)
-function selectPlace(item, fromMap = false) {
+// Picks a place: from the list or from the map.
+// Zooms out so everyone's start and the place are visible, then draws the routes.
+async function selectPlace(item, fromMap = false) {
+    const changed = item !== selectedItem;   // check before highlightPlace updates selectedItem
     highlightPlace(item);
 
     if (fromMap) {
         item.$card[0].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-    } else {
-        item.marker.openPopup();
-        map.flyTo([item.place.lat, item.place.lng], Math.max(map.getZoom(), 17), { duration: 0.8 });
     }
-}
 
+    // Same place clicked again, or no search yet: nothing to redraw
+    if (!changed || !searchState) {
+        if (!fromMap) item.marker.openPopup();
+        return;
+    }
+
+    // Remove the old routes straight away and cancel any route animation still running
+    routeLayer.clearLayers();
+    routeToken++;
+
+    // Fit every route to this place on screen (route points, not just the ends,
+    // because a route can curve outside the start-to-place box)
+    const routes = routesForPlace(item.place, searchState.locations);
+    await flyToBounds(L.latLngBounds(routes.flat()).pad(0.2));
+
+    // The user may have picked another place (or started a new search) while the map was moving
+    if (item !== selectedItem) return;
+
+    drawRoutesTo(item.place);
+    if (!fromMap) item.marker.openPopup();
+}
 
 function resetPlaces() {
     placesLayer.clearLayers();
@@ -382,19 +422,6 @@ function resetPlaces() {
     $placesBox.prop('hidden', true);
 }
 
-// SVG layers (routes) get stretched during long fly animations, so fade them
-// out while the map is flying and bring them back once it has stopped
-function hideRoutesWhileFlying() {
-    const pane = map.getPane('overlayPane');
-    pane.style.opacity = 0;
-
-    const show = () => {
-        clearTimeout(fallback);
-        pane.style.opacity = '';
-    };
-    const fallback = setTimeout(show, 2500); // in case 'moveend' never fires
-    map.once('moveend', show);
-}
 
 
 // Zoom the map in around the midpoint and the first few places
@@ -406,7 +433,6 @@ function flyToBounds(bounds) {
         };
         const timer = setTimeout(done, 2000); // in case no move is needed
         map.once('moveend', done);
-        hideRoutesWhileFlying();
         map.flyToBounds(bounds, { maxZoom: 16, duration: 1 });
     });
 }
@@ -522,15 +548,15 @@ function cleanRoute(points, from, to) {
     return cleaned;
 }
 
-
-function routeLengthMeters(points) {
+// Length of a route on screen right now, in pixels
+function routeLengthPixels(points) {
     let total = 0;
     for (let i = 1; i < points.length; i++) {
-        total += L.latLng(points[i - 1]).distanceTo(L.latLng(points[i]));
+        total += map.latLngToContainerPoint(points[i - 1])
+            .distanceTo(map.latLngToContainerPoint(points[i]));
     }
     return total;
 }
-
 function routesForPlace(place, locations){
     return place.routes.map((route, i) =>
         cleanRoute(
@@ -545,7 +571,7 @@ function routesForPlace(place, locations){
 
 // Draws every route with the snake animation, all starting together.
 // Resolves when the last line arrives (or after a safety timeout).
-function animateRoutes(routes, token, colors) {
+function animateRoutes(routes, token, colors, tooltips) {
     const lines = routes.map((points, i) =>
         L.polyline(points, {
             color: colors[i],
@@ -556,7 +582,7 @@ function animateRoutes(routes, token, colors) {
             lineJoin: 'round',
             interactive: false,
             snakingSpeed: 200
-        }).addTo(resultLayer)
+        }).addTo(routeLayer)
     );
 
     return new Promise(resolve => {
@@ -568,21 +594,24 @@ function animateRoutes(routes, token, colors) {
             if (done) return;
             done = true;
             clearTimeout(safety);
+            //Only add hover areas if this search is still the current one
+            if(tooltips && token === routeToken) addRouteHover(routes, lines, tooltips);
             resolve();
         }
 
         function finishOne() {
             remaining--;
-            if (remaining <= 0 || token !== searchToken) finish();
+            if (remaining <= 0 || token !== routeToken) finish();
         }
 
         // If something goes wrong, do not leave the page waiting forever
         safety = setTimeout(finish, SNAKE_MS * 3 + 2000);
 
-        lines.forEach((line, i) => {
-            const length = routeLengthMeters(routes[i]);
-            const speed = (length / 8) / (SNAKE_MS / 1000);
-            line.options.snakingSpeed = Number.isFinite(speed) ? Math.max(60, speed) : 200;
+        lines.forEach((line, i) => {            
+            // Same on-screen duration for every line: longer routes simply move faster
+            const pixels = routeLengthPixels(routes[i]);
+            line.options.snakingSpeed = Math.max(1, pixels / (SNAKE_MS / 1000));
+
 
             line.on('snakeend', finishOne);
 
@@ -595,6 +624,33 @@ function animateRoutes(routes, token, colors) {
             }
         });
     });
+}
+
+// Tooltip for one person's route, e.g. "Person 1 · 18 min" / "E15 2RA: walking → tube → walking"
+function routeTooltip(route) {
+    // createPopup builds the content with .text(), so the postcode cannot inject HTML
+    return createPopup(`${route.minutes} min`);
+}
+
+// Invisible, wider copies of the routes that catch the mouse and show the travel time
+function addRouteHover(routes, lines, tooltips) {
+    routes.forEach((points, i) => {
+        L.polyline(points, { weight: 18, opacity: 0 })   // interactive by default
+            .bindTooltip(tooltips[i], { sticky: true, direction: 'top', offset: [0, -8] })
+            .on('mouseover', () => lines[i].setStyle({ weight: 7 }))
+            .on('mouseout', () => lines[i].setStyle({ weight: 4 }))
+            .addTo(routeLayer);
+    });
+}
+
+// Clears the current routes and draws everyone's route to the given place
+function drawRoutesTo(place) {
+    const token = ++routeToken;
+    routeLayer.clearLayers();
+
+    const routes = routesForPlace(place, searchState.locations);
+    const tooltips = place.routes.map(route => routeTooltip(route));
+    return animateRoutes(routes, token, searchState.colors, tooltips);
 }
 
 /* ---------- main ---------- */
@@ -629,6 +685,7 @@ async function findMeetingPlace() {
         const locations = data.coords.map(c => ({ lat: c.latitude, lng: c.longitude }));
                 // Colour for each person, matched to their row in the form
         const colors = entries.map(e => PERSON_COLORS[e.person - 1]);
+        searchState = { locations, colors };
 
         const center = { lat: data.midpoint.latitude, lng: data.midpoint.longitude };
         setSearching(true, center);
@@ -645,6 +702,7 @@ async function findMeetingPlace() {
         if (token !== searchToken) return;
 
         resultLayer.clearLayers();
+        routeLayer.clearLayers();
         resetPlaces();
 
              locations.forEach((location, i) => {
@@ -656,11 +714,13 @@ async function findMeetingPlace() {
 
         const routes = routesForPlace(places[0], locations); 
 
+
+
         const bounds = L.latLngBounds(routes.flat());
         map.fitBounds(bounds.pad(0.2));
 
         showMessage('Drawing routes…');
-        await animateRoutes(routes, token, colors);
+        await drawRoutesTo(places[0]);
         if (token !== searchToken) return;
 
         // Midpoint: an HTML marker (not SVG), so it does not grow during zoom animations
