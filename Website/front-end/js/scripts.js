@@ -48,7 +48,6 @@ const $list = $('#postcodeList');
 const $addButton = $('#addPerson');
 const $findButton = $('#findPlace');
 const $message = $('#formMessage');
-const $searching = $('#searching');
 const $placesBox = $('#placesBox');
 const $placeList = $('#placeList');
 
@@ -76,9 +75,38 @@ function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-// Radar ripples in the middle of the map while we search
-function setSearching(on) {
-    $searching.toggleClass('active', on);
+// The radar is a map marker, so it stays on its coordinates when the map
+// moves or zooms. Before the midpoint is known it sits at the map centre;
+// call setSearching(true, midpoint) to move it onto the midpoint.
+let radarMarker = null;
+
+function setSearching(on, point) {
+    if (on) {
+        const latlng = point ? [point.lat, point.lng] : map.getCenter();
+
+        if (!radarMarker) {
+            radarMarker = L.marker(latlng, {
+                icon: L.divIcon({
+                    className: '',
+                    html: '<div class="searching active">' +
+                          '<span></span><span></span><span></span>' +
+                          '<i class="searching-dot"></i></div>',
+                    iconSize: [0, 0],
+                    iconAnchor: [0, 0]
+                }),
+                interactive: false,
+                keyboard: false,
+                zIndexOffset: -1000
+            }).addTo(map);
+        } else {
+            radarMarker.setLatLng(latlng);
+        }
+    } else if (radarMarker) {
+        const marker = radarMarker;
+        radarMarker = null;
+        $(marker.getElement()).find('.searching').removeClass('active');
+        setTimeout(() => marker.remove(), 300); // let it fade out first
+    }
 }
 
 /* ---------- intro overlay ---------- */
@@ -516,6 +544,7 @@ async function findMeetingPlace() {
 
         const locations = data.coords.map(c => ({ lat: c.latitude, lng: c.longitude }));
         const center = { lat: data.midpoint.latitude, lng: data.midpoint.longitude };
+        setSearching(true, center);
         const centerPoint = L.latLng(center.lat, center.lng);
         const places = data.places.map(p => ({
             ...p,
