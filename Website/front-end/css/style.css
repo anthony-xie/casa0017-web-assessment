@@ -524,6 +524,15 @@ html, body {
     transform: rotate(45deg);
 }
 
+/* The place picked in the list: a bit bigger, growing from the tip of the pin */
+.place-pin {
+    transition: scale 200ms ease-out;
+}
+
+.place-pin-selected .place-pin {
+    scale: 1.35; /* keep in sync with SELECTED_PIN_SCALE in scripts.js */
+}
+
 @keyframes place-pop {
     from { transform: scale(0); }
     to   { transform: scale(1); }

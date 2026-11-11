@@ -237,6 +237,27 @@ function placePinIcon(kind) {
     });
 }
 
+// The selected place's pin is drawn this much bigger (must match .place-pin-selected in style.css)
+const SELECTED_PIN_SCALE = 1.35;
+const PIN_HEIGHT = 36; // from the tip of the pin to its top, in px (same as iconAnchor y)
+
+// Make one pin bigger (or normal size again). The pin grows from its tip, so it stays on the same spot.
+function setPinSelected(item, selected) {
+    const el = item.marker.getElement();
+    if (el) el.classList.toggle('place-pin-selected', selected);
+
+    // Keep the selected pin above the others
+    item.marker.setZIndexOffset(selected ? 1000 : 0);
+
+    // Lift the popup so it does not cover the bigger pin (7 is Leaflet's default offset)
+    const popup = item.marker.getPopup();
+    if (popup) {
+        const lift = selected ? Math.round(PIN_HEIGHT * (SELECTED_PIN_SCALE - 1)) : 0;
+        popup.options.offset = L.point(0, 7 - lift);
+        if (popup.isOpen()) popup.update();
+    }
+}
+
 function formatDistance(meters) {
     return meters < 1000
         ? `${Math.round(meters / 10) * 10} m`
@@ -287,6 +308,8 @@ function renderPlaceList() {
     $placesBox.prop('hidden', !placeMarkers.length).scrollTop(0);
 }
 
+    if (selectedItem && selectedItem !== item) setPinSelected(selectedItem, false);
+
 // Picks a place: from the list (fly to it) or from the map (scroll the list)
 function selectPlace(item, fromMap = false) {
     selectedItem = item;
@@ -296,6 +319,8 @@ function selectPlace(item, fromMap = false) {
         item.marker.setLatLng([item.place.lat, item.place.lng]).setOpacity(1).addTo(placesLayer);
         item.shown = true;
     }
+
+    setPinSelected(item, true);
 
     $placeList.find('.place-card').removeClass('active');
     item.$card.addClass('active');
@@ -620,6 +645,12 @@ async function findMeetingPlace() {
                 }).bindPopup(createPopup(place.name, place.label))
             };
             item.marker.on('click', () => selectPlace(item, true));
+
+            // Leaflet makes a new element each time a pin is re-added (zooming hides/shows pins)
+            item.marker.on('add', () => {
+                if (item === selectedItem) setPinSelected(item, true);
+            });
+
             return item;
         });
 
