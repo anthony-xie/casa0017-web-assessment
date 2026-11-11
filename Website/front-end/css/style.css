@@ -136,3 +136,474 @@ th { color: var(--muted); font-weight: 700; }
   .block { padding: 14px; }
   .metrics { gap: 14px; }
 }
+html, body {
+    height: 100%;
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #e9ecef;
+}
+
+.app {
+    display: flex;
+    height: 100vh;
+    height: 100dvh;
+}
+
+.sidebar {
+    position: relative;
+    width: 390px;
+    min-width: 390px;
+    height: 100%;
+    overflow: hidden;
+    color: #343a40;
+    background: #fafaf9;
+    border-right: 1px solid #e5e5e3;
+    box-shadow: none;
+    z-index: 1000;
+    transition: width 300ms ease, min-width 300ms ease;
+}
+
+/* Collapsed: a narrow strip stays visible */
+.sidebar.collapsed {
+    width: 56px;
+    min-width: 56px;
+}
+
+.sidebar-body {
+    width: 390px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: 28px;
+    transition: opacity 200ms ease;
+}
+
+.sidebar.collapsed .sidebar-body {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.sidebar-toggle {
+    position: absolute;
+    top: 24px;
+    right: 12px;
+    z-index: 2;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #e5e5e3;
+    border-radius: 8px;
+    background: #fff;
+    color: #495057;
+    cursor: pointer;
+}
+
+.sidebar-toggle:hover {
+    background: #f1f1ef;
+    color: #212529;
+}
+
+.sidebar-toggle i { transition: transform 300ms ease; }
+
+.sidebar.collapsed .sidebar-toggle i {
+    transform: rotate(180deg);
+}
+
+.logo {
+    height: auto;
+    display: flex;
+    align-items: flex-start;
+    padding-bottom: 0;
+    margin-bottom: 24px;
+    font-size: 22px;
+    font-weight: 500;
+    letter-spacing: -0.3px;
+}
+
+.postcode-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+#postcodeList {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* Each row: the input always fills the full width, the X floats inside it */
+.postcode-row {
+    position: relative;
+}
+
+.postcode-input {
+    min-height: 44px;
+    padding-right: 40px;
+    border-color: rgba(108, 117, 125, 0.2);
+    border-radius: 7px;
+    background: #fff;
+    color: #343a40;
+    font-size: 15px;
+}
+
+.postcode-input:focus {
+    border-color: #212529;
+    background: #fff;
+    box-shadow: none;
+}
+
+.postcode-input::placeholder { color: #8a9299; }
+
+.remove-button {
+    position: absolute;
+    top: 50%;
+    right: 6px;
+    transform: translateY(-50%);
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: #8a9299;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+.remove-button:hover {
+    background: #f1f1ef;
+    color: #212529;
+}
+
+.remove-button:disabled { display: none; }
+
+.add-button {
+    align-self: flex-start;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: #495057;
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.add-button:hover { color: #212529; }
+.add-button:disabled { color: #adb5bd; cursor: default; }
+
+.find-button {
+    align-self: stretch;
+    min-width: 96px;
+    min-height: 44px;
+    padding: 8px 20px;
+    font-size: 15px;
+    font-weight: 500;
+}
+
+.find-button:disabled { cursor: wait; }
+
+/* Plain grey message under the Find button */
+.form-message {
+    min-height: 20px;
+    margin: 0;
+    color: #6c757d;
+    font-size: 13px;
+    line-height: 1.5;
+    text-align: left;
+    overflow-wrap: anywhere;
+    text-wrap: pretty;
+    padding-left: 3px;
+}
+
+/* ---------- Places list in the sidebar ---------- */
+.places {
+    flex: 1;
+    min-height: 0;
+    margin-top: 8px;
+    padding-right: 6px;
+    overflow-y: auto;
+}
+
+.places-title {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    margin: 0;
+    padding: 8px 0;
+    background: #fafaf9;
+    color: #6c757d;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.place-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 0;
+    padding: 0 0 16px;
+    list-style: none;
+}
+
+.place-card {
+    display: flex;
+    gap: 12px;
+    padding: 12px;
+    border: 1px solid #e5e5e3;
+    border-radius: 8px;
+    background: #fff;
+    cursor: pointer;
+}
+
+.place-card:hover { background: #f6f6f4; }
+
+.place-card:focus-visible {
+    outline: 2px solid #212529;
+    outline-offset: 2px;
+}
+
+.place-card.active {
+    border-color: #212529;
+    box-shadow: 0 0 0 1px #212529;
+}
+
+.place-card-icon {
+    flex: none;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    color: #fff;
+    font-size: 15px;
+}
+
+.place-card-main {
+    min-width: 0;
+    font-size: 13px;
+    line-height: 1.45;
+}
+
+.place-card-name {
+    color: #212529;
+    font-size: 15px;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.place-card-meta {
+    margin-bottom: 4px;
+    color: #6c757d;
+}
+
+.place-card-line {
+    color: #495057;
+    overflow-wrap: anywhere;
+}
+
+.place-card-hours {
+    margin-top: 4px;
+    color: #6c757d;
+    white-space: pre-line;
+    overflow-wrap: anywhere;
+}
+
+.place-card-link {
+    display: inline-block;
+    margin-top: 4px;
+    color: #212529;
+    text-decoration: underline;
+}
+
+.map-container {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    height: 100%;
+}
+
+#map {
+    width: 100%;
+    height: 100%;
+    background: #e9ecef;
+}
+
+/* ---------- Searching radar (middle of the map) ---------- */
+.searching {
+    position: absolute;
+    inset: 0;
+    z-index: 900;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 300ms ease;
+}
+
+.searching.active { opacity: 1; }
+
+.searching span {
+    position: absolute;
+    width: 280px;
+    height: 280px;
+    box-sizing: border-box;
+    border: 2px solid rgba(220, 53, 69, 0.55);
+    border-radius: 50%;
+    background: rgba(220, 53, 69, 0.08);
+    transform: scale(0);
+    animation: search-ripple 2.4s ease-out infinite;
+}
+
+.searching span:nth-child(2) { animation-delay: 0.8s; }
+.searching span:nth-child(3) { animation-delay: 1.6s; }
+
+.searching-dot {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    background: #dc3545;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+}
+
+@keyframes search-ripple {
+    from { transform: scale(0); opacity: 1; }
+    to   { transform: scale(1); opacity: 0; }
+}
+
+/* Zoom buttons and the "my location" button share the same look */
+.leaflet-control-zoom a,
+.leaflet-control-locate a {
+    background: rgba(248, 249, 251, 0.9) !important;
+    color: #212529 !important;
+    border-color: rgba(218, 220, 224, 0.8) !important;
+}
+
+.leaflet-control-locate a {
+    font-size: 16px;
+}
+
+/* Meeting point pin: same shape as the blue pins, recolored to red */
+.meeting-marker {
+    filter: hue-rotate(150deg) saturate(1.6);
+}
+
+/* Place pins (cafés, restaurants, pubs...): teardrop with an icon inside.
+   The color comes from script.js, so each type looks different. */
+.place-pin {
+    width: 30px;
+    height: 30px;
+    transform-origin: 50% 120%;
+    animation: place-pop 320ms cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+
+.place-pin-body {
+    width: 30px;
+    height: 30px;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #fff;
+    border-radius: 50% 50% 50% 0;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+    transform: rotate(-45deg);
+}
+
+.place-pin-body i {
+    color: #fff;
+    font-size: 14px;
+    line-height: 1;
+    transform: rotate(45deg);
+}
+
+@keyframes place-pop {
+    from { transform: scale(0); }
+    to   { transform: scale(1); }
+}
+
+/* Intro overlay on the map (click it or focus an input to hide it) */
+.intro {
+    position: absolute;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 24px 12vh;
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    cursor: pointer;
+}
+
+.intro-title {
+    margin: 0;
+    color: #fff;
+    font-size: clamp(32px, 4.5vw, 56px);
+    font-weight: 400;
+    letter-spacing: -0.5px;
+    line-height: 1.15;
+    text-align: center;
+}
+
+.intro-fade {
+    display: block;
+    color: rgba(255, 255, 255, 0.55);
+    font-style: italic;
+}
+
+/* Narrow window: map on top, panel at the bottom */
+@media (max-width: 900px) {
+    .app { flex-direction: column-reverse; }
+
+    .sidebar {
+        width: 100%;
+        min-width: 0;
+        height: auto;
+        max-height: 50dvh;
+        overflow-y: auto;
+        border-right: 0;
+        border-top: 1px solid #e5e5e3;
+        box-shadow: 0 -3px 18px rgba(52, 58, 64, 0.12);
+        transition: max-height 300ms ease;
+    }
+
+    .sidebar.collapsed {
+        width: 100%;
+        min-width: 0;
+        max-height: 56px;
+        overflow: hidden;
+    }
+
+    .sidebar-body {
+        width: 100%;
+        height: auto;
+        padding: 20px;
+    }
+
+    /* The whole panel scrolls here, not just the list */
+    .places {
+        flex: none;
+        overflow: visible;
+    }
+
+    .logo { margin-bottom: 20px; }
+
+    /* Open: arrow points down (tap to collapse). Collapsed: points up. */
+    .sidebar-toggle i { transform: rotate(-90deg); }
+    .sidebar.collapsed .sidebar-toggle i { transform: rotate(90deg); }
+
+    .intro { padding-bottom: 24px; }
+}
