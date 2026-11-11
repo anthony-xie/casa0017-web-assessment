@@ -1,136 +1,70 @@
 <!DOCTYPE html>
-<html lang="en-GB">
+<html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Find A Place</title>
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%93%8D%3C/text%3E%3C/svg%3E">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-     integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-     crossorigin=""/>
-  <link rel="stylesheet" href="css/style.css">
-
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-     crossorigin=""></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Find a Place</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+          integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <header class="top">
-    <div class="brand"><span>findaplace</span></div>
-  </header>
+<div class="app">
+    <aside class="sidebar">
+        <button id="toggleSidebar" type="button" class="sidebar-toggle" aria-label="Toggle panel" aria-expanded="true">
+            <i class="bi bi-chevron-left" aria-hidden="true"></i>
+        </button>
 
-  <main class="layout">
-    <aside class="side" aria-label="Controls and results">
-      <section class="block">
-        <div class="block-head">
-          <h2>Who’s meeting?</h2>
-          <button type="button" class="add-person" id="add-person">+ Add person</button>
-        </div>
-        <ol class="people">
-          <li class="person" style="--pc:red;--pc-ink:white">
-            <div class="p-top"><span class="dot" aria-hidden="true">1</span><b class="p-name">Person 1</b><button type="button" class="remove-person" aria-label="Remove Person 1">Remove</button></div>
-            <input class="person-address" type="text" aria-label="Starting address for Person 1" placeholder="Enter postcode or address" autocomplete="street-address">
-          </li>
-          <li class="person" style="--pc:blue;--pc-ink:white">
-            <div class="p-top"><span class="dot" aria-hidden="true">2</span><b class="p-name">Person 2</b><button type="button" class="remove-person" aria-label="Remove Person 2">Remove</button></div>
-            <input class="person-address" type="text" aria-label="Starting address for Person 2" placeholder="Enter postcode or address" autocomplete="street-address">
-          </li>
-          <li class="person" style="--pc: green;--pc-ink:white">
-            <div class="p-top"><span class="dot" aria-hidden="true">3</span><b class="p-name">Person 3</b><button type="button" class="remove-person" aria-label="Remove Person 3">Remove</button></div>
-            <input class="person-address" type="text" aria-label="Starting address for Person 3" placeholder="Enter postcode or address" autocomplete="street-address">
-          </li>
-        </ol>
-      </section>
+        <div class="sidebar-body">
+            <div class="logo">
+                <span class="logo-find">find</span>
+                <span class="logo-a">a</span>
+                <span class="logo-place">place</span>
+            </div>
 
-      <section class="block">
-        <div class="row">
-          <label class="field" for="venue"><span>Type of venue</span>
-            <select id="venue" name="venue">
-              <option value="restaurant">Restaurant</option>
-              <option value="cafe">Café</option>
-              <option value="park">Park</option>
-              <option value="library">Library</option>
-            </select>
-          </label>
-          <label class="field" for="rule"><span>Scoring algorithm</span>
-            <select id="rule" name="rule">
-              <option value="longest">Minimise Total Travel Time</option>
-              <option value="total">Minimise Longest Journey</option>
-              <option value="gap">Minimise Travel Time Difference</option>
-            </select>
-          </label>
-        </div>
-      </section>
+            <form id="postcodeForm" class="postcode-form">
+                <div id="postcodeList"></div>
+                <button id="addPerson" type="button" class="add-button" aria-label="Add person">
+                    <i class="bi bi-plus-circle-dotted" aria-hidden="true"></i>
+                </button>
+                <select id="category" class="form-select category-select" aria-label="Type of place">
+                    <option value="all" selected>All</option>
+                    <option value="cafe">Café</option>
+                    <option value="restaurant">Restaurant</option>
+                    <option value="pub">Pub</option>
+                    <option value="park">Park</option>
+                    <option value="library">Library</option>
+                </select>
+                <button id="findPlace" type="submit" class="btn btn-dark find-button">Find</button>
+                <p id="formMessage" class="form-message" role="status"></p>
+            </form>
 
-      <section class="block">
-        <div class="best">
-          <p class="k">Example meeting place</p>
-          <h2>Point A</h2>
-          <div class="metrics">
-            <div><span>Longest</span><b>—</b></div>
-            <div><span>Total</span><b>—</b></div>
-            <div><span>Gap</span><b>—</b></div>
-          </div>
+            <section id="placesBox" class="places" hidden>
+                <h2 class="places-title">Places nearby</h2>
+                <ul id="placeList" class="place-list"></ul>
+            </section>
         </div>
-        <h3>Everyone’s journey</h3>
-        <ul class="journeys">
-          <li style="--pc:red">
-            <div class="j-top"><span class="dot sm" style="background:red;color:white">1</span>
-              <b>Person 1</b><span class="mode">Public transport</span><span class="mins">XX min</span></div>
-            <p class="legs">Postcode 1 to Point A</p>
-          </li>
-          <li style="--pc:blue">
-            <div class="j-top"><span class="dot sm" style="background:blue;color:white">2</span>
-              <b>Person 2</b><span class="mode">Public transport</span><span class="mins">XX min</span></div>
-            <p class="legs">Postcode 2 to Point A</p>
-          </li>
-          <li style="--pc:green">
-            <div class="j-top"><span class="dot sm" style="background:green;color:white">3</span>
-              <b>Person 3</b><span class="mode">Public transport</span><span class="mins">XX min</span></div>
-            <p class="legs">Postcode 3 to Point A</p>
-          </li>
-        </ul>
-        <h3>Meeting Places</h3>
-        <div class="table-wrap">
-          <table>
-            <thead><tr><th>#</th><th>Place</th><th>Time Taken</th></tr></thead>
-            <tbody>
-              <tr><td>—</td><td>Point A</td><td>—</td></tr>
-              <tr><td>—</td><td>Point B</td><td>—</td></tr>
-              <tr><td>—</td><td>Point C</td><td>—</td></tr>
-            </tbody>
-          </table>
-        </div>
-        <h3>Nearby sample places</h3>
-        <div class="nearby-groups">
-          <details class="nearby-group">
-            <summary>Restaurants</summary>
-            <ul class="venues"><li><span>Restaurant A</span></li><li><span>Restaurant B</span></li><li><span>Restaurant C</span></li></ul>
-          </details>
-          <details class="nearby-group">
-            <summary>Cafés</summary>
-            <ul class="venues"><li><span>Cafe A</span></li><li><span>Cafe B</span></li><li><span>Cafe C</span></li></ul>
-          </details>
-          <details class="nearby-group">
-            <summary>Parks</summary>
-            <ul class="venues"><li><span>Park A</span></li><li><span>Park B</span></li><li><span>Park C</span></li></ul>
-          </details>
-          <details class="nearby-group">
-            <summary>Libraries</summary>
-            <ul class="venues"><li><span>Library A</span></li><li><span>Library B</span></li><li><span>Library C</span></li></ul>
-          </details>
-        </div>
-      </section>
     </aside>
 
-    <section class="mapwrap" aria-label="Interactive map of London">
-      <div id="map" role="region" aria-label="Map of London"></div>
-      <div class="map-note" aria-live="polite">
-        <strong>London map</strong>
-        </div>
-    </section>
-  </main>
+    <main class="map-container">
+        <div id="map"></div>
 
-  <script src="js/scripts.js"></script>
+        <div id="intro" class="intro">
+            <p class="intro-title">
+                find a fair place to meet
+                <span class="intro-fade">for everyone</span>
+            </p>
+        </div>
+    </main>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="https://cdn.jsdelivr.net/npm/leaflet.polyline.snakeanim@0.2.0/L.Polyline.SnakeAnim.js"></script>
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="js/scripts.js"></script>
 </body>
 </html>
