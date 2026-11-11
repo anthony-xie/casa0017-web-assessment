@@ -97,7 +97,7 @@ th { color: var(--muted); font-weight: 700; }
   min-height: 520px;
   background: #e9eef0;
 }
-#map { width: 100%; height: 100%; min-height: 520px; }
+
 .map-note {
   position: absolute;
   z-index: 500;
@@ -129,7 +129,7 @@ th { color: var(--muted); font-weight: 700; }
 @media (max-width: 800px) {
   .layout { display: flex; flex-direction: column; }
   .side { border-right: 0; overflow: visible; }
-  .mapwrap, #map { min-height: 420px; height: 55vh; }
+
 }
 @media (max-width: 440px) {
   .row { grid-template-columns: 1fr; }
@@ -337,9 +337,8 @@ html, body {
     margin: 0;
     padding: 8px 0;
     background: #fafaf9;
-    color: #6c757d;
-    font-size: 13px;
-    font-weight: 600;
+    font-size: 20px;
+    font-weight: 550;
 }
 
 .place-list {
@@ -433,6 +432,7 @@ html, body {
 #map {
     width: 100%;
     height: 100%;
+    min-height: 0;   /* override the old 520px/420px minimum so the map fits its area */
     background: #e9ecef;
 }
 
@@ -490,10 +490,6 @@ html, body {
     font-size: 16px;
 }
 
-/* Meeting point pin: same shape as the blue pins, recolored to red */
-.meeting-marker {
-    filter: hue-rotate(150deg) saturate(1.6);
-}
 
 /* Place pins (cafés, restaurants, pubs...): teardrop with an icon inside.
    The color comes from script.js, so each type looks different. */
@@ -616,3 +612,32 @@ html, body {
 
     .intro { padding-bottom: 24px; }
 }
+/* Midpoint dot: an HTML marker so it keeps its size while the map zooms */
+.midpoint-dot {
+    width: 12px;
+    height: 12px;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    background: #dc3545;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+    transition: opacity 0.3s;   /* used by the fade-out */
+    
+}
+
+/* Routes fade out/in while the map flies (see hideRoutesWhileFlying) */
+.leaflet-overlay-pane {
+    transition: opacity 10s;
+}
+
+/* White halo around each route so lighter colours stand out on the map */
+.route-line {
+    filter: drop-shadow(0 0 1.5px #fff) drop-shadow(0 0 1px #fff);
+}
+
+/* Colour strip on each postcode input, matching that person's route */
+.postcode-row:nth-child(1) .postcode-input { border-left: 4px solid #2a78d6; }
+.postcode-row:nth-child(2) .postcode-input { border-left: 4px solid #d95926; }
+.postcode-row:nth-child(3) .postcode-input { border-left: 4px solid #1baf7a; }
+.postcode-row:nth-child(4) .postcode-input { border-left: 4px solid #6250d6; }
+.postcode-row:nth-child(5) .postcode-input { border-left: 4px solid #d55181; }
+.postcode-row:nth-child(6) .postcode-input { border-left: 4px solid #c98500; }

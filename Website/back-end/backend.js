@@ -16,7 +16,7 @@ export async function parseInput(input){
     const {postcodes, category} = input;
 
     //Ensure that category is valid
-    const CATEGORIES = ['park', 'library', 'restaurant', 'cafe', 'pub'];
+    const CATEGORIES = ['park', 'library', 'restaurant', 'cafe', 'pub', 'all'];
     if (!CATEGORIES.includes(category)){
         throw new AppError('Invalid category', 400);
     }
@@ -51,21 +51,28 @@ async function findNearestPlaces(midpoint, category){
     const latDelta = 3 / 111.32;
     const lonDelta = 3 / (111.32 * Math.cos(midpoint.latitude * Math.PI / 180));
 
+    const limit = category === 'all' ? 8 : 3;
+     const CATEGORIES = ['park', 'library', 'restaurant', 'cafe', 'pub'];
+    // 'all' → search every real category; otherwise just the one picked
+    const wanted = category === 'all' ? CATEGORIES : [category];
+    const placeholders = wanted.map(() => '?').join(', ');   // "?, ?, ?, ?, ?" or "?"
+
     const [pois] = await db.execute(
         //Selects the 3 POIs closest to the midpoint around a 6kmx6km box
-        `SELECT osm_id, name, category, lat, lon, opening_hours, cuisine, postcode 
+        `SELECT osm_id, name, category, lat, lon, opening_hours, cuisine, postcode
             FROM osm_venues
-            WHERE category = ? AND lat BETWEEN ? AND ? AND lon BETWEEN ? AND ?
+            WHERE category IN (${placeholders})
+            AND lat BETWEEN ? AND ? AND lon BETWEEN ? AND ?
             ORDER BY (POW(lat - ?, 2) + POW((lon - ?) * COS(RADIANS(?)), 2)) ASC
-            LIMIT 3`,
-            [category, 
-            midpoint.latitude - latDelta, 
-            midpoint.latitude + latDelta, 
-            midpoint.longitude - lonDelta,
-            midpoint.longitude + lonDelta,  
-            midpoint.latitude, 
-            midpoint.longitude,
-            midpoint.latitude]
+            LIMIT ${limit}`,
+        [...wanted,
+        midpoint.latitude - latDelta,
+        midpoint.latitude + latDelta,
+        midpoint.longitude - lonDelta,
+        midpoint.longitude + lonDelta,
+        midpoint.latitude,
+        midpoint.longitude,
+        midpoint.latitude]
     );
 
     //Throws error if no POIs were found in range
@@ -115,6 +122,7 @@ export async function search(input){
         places.push({
             name: poi.name,
             postcode: poi.postcode,
+            category: poi.category,
             lat: poi.lat,
             lon: poi.lon,
             opening_hours: poi.opening_hours,

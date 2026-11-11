@@ -27,11 +27,41 @@ const PLACE_TYPES = {
     library:  { label: 'Library',    icon: 'bi-book',     color: '#e08a00' }
 };
 
+// One fixed colour per person (by their row in the form), checked for colour-blind safety.
+// Never cycled: MAX_PEOPLE is 6, so there is always a colour.
+const PERSON_COLORS = ['#2a78d6', '#d95926', '#1baf7a', '#6250d6', '#d55181', '#c98500'];
+// Same teardrop shape and size as Leaflet's default blue marker, in any colour
+function personPinIcon(color) {
+    return L.divIcon({
+        className: '',
+        html: `<svg width="25" height="41" viewBox="0 0 25 41"
+                    style="display:block; filter: drop-shadow(1px 2px 2px rgba(0, 0, 0, 0.35))">
+                   <path d="M12.5 0C5.6 0 0 5.6 0 12.5C0 21.9 12.5 41 12.5 41S25 21.9 25 12.5C25 5.6 19.4 0 12.5 0Z"
+                         fill="${color}"/>
+                   <circle cx="12.5" cy="12.5" r="4.5" fill="#fff"/>
+               </svg>`,
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],   // the tip of the pin sits on the location
+        popupAnchor: [1, -34]   // same popup position as the default marker
+    });
+}
+
+
+// Leaflet's default SVG renderer only redraws when a fly animation ends, and
+// stretches the lines in between (they look huge). This one redraws every frame.
+const SmoothZoomRenderer = L.SVG.extend({
+    _onZoom() {
+        this._reset();
+    }
+});
+
 const map = L.map('map', {
     center: [51.5074, -0.1278],
     zoom: 13,
-    zoomControl: false
+    zoomControl: false,
+    renderer: new SmoothZoomRenderer()
 });
+
 
 L.control.zoom({ position: 'topright' }).addTo(map);
 
@@ -313,8 +343,8 @@ function renderPlaceList() {
     $placesBox.prop('hidden', !placeMarkers.length).scrollTop(0);
 }
 
-// Picks a place: from the list (fly to it) or from the map (scroll the list)
-function selectPlace(item, fromMap = false) {
+// Marks one place as the chosen one: bigger pin + highlighted card (no map movement)
+function highlightPlace(item) {
     if (selectedItem && selectedItem !== item) setPinSelected(selectedItem, false);
     selectedItem = item;
 
@@ -328,6 +358,11 @@ function selectPlace(item, fromMap = false) {
 
     $placeList.find('.place-card').removeClass('active');
     item.$card.addClass('active');
+}
+
+// Picks a place: from the list (fly to it) or from the map (scroll the list)
+function selectPlace(item, fromMap = false) {
+    highlightPlace(item);
 
     if (fromMap) {
         item.$card[0].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
@@ -336,6 +371,7 @@ function selectPlace(item, fromMap = false) {
         map.flyTo([item.place.lat, item.place.lng], Math.max(map.getZoom(), 17), { duration: 0.8 });
     }
 }
+
 
 function resetPlaces() {
     placesLayer.clearLayers();
@@ -346,6 +382,21 @@ function resetPlaces() {
     $placesBox.prop('hidden', true);
 }
 
+// SVG layers (routes) get stretched during long fly animations, so fade them
+// out while the map is flying and bring them back once it has stopped
+function hideRoutesWhileFlying() {
+    const pane = map.getPane('overlayPane');
+    pane.style.opacity = 0;
+
+    const show = () => {
+        clearTimeout(fallback);
+        pane.style.opacity = '';
+    };
+    const fallback = setTimeout(show, 2500); // in case 'moveend' never fires
+    map.once('moveend', show);
+}
+
+
 // Zoom the map in around the midpoint and the first few places
 function flyToBounds(bounds) {
     return new Promise(resolve => {
@@ -355,6 +406,7 @@ function flyToBounds(bounds) {
         };
         const timer = setTimeout(done, 2000); // in case no move is needed
         map.once('moveend', done);
+        hideRoutesWhileFlying();
         map.flyToBounds(bounds, { maxZoom: 16, duration: 1 });
     });
 }
@@ -489,12 +541,15 @@ function routesForPlace(place, locations){
     );
 }
 
+
+
 // Draws every route with the snake animation, all starting together.
 // Resolves when the last line arrives (or after a safety timeout).
-function animateRoutes(routes, token) {
-    const lines = routes.map(points =>
+function animateRoutes(routes, token, colors) {
+    const lines = routes.map((points, i) =>
         L.polyline(points, {
-            color: '#3388ff',
+            color: colors[i],
+            className: 'route-line',
             weight: 4,
             opacity: 0.9,
             lineCap: 'round',
@@ -572,13 +627,16 @@ async function findMeetingPlace() {
         if (!res.ok) throw friendlyError(data.error);       // shows e.g. "One or more postcodes are outside of London"
 
         const locations = data.coords.map(c => ({ lat: c.latitude, lng: c.longitude }));
+                // Colour for each person, matched to their row in the form
+        const colors = entries.map(e => PERSON_COLORS[e.person - 1]);
+
         const center = { lat: data.midpoint.latitude, lng: data.midpoint.longitude };
         setSearching(true, center);
         const centerPoint = L.latLng(center.lat, center.lng);
         const places = data.places.map(p => ({
             ...p,
-            kind: category,
-            label: PLACE_TYPES[category].label,
+            kind: p.category,
+            label: PLACE_TYPES[p.category].label,
             lng: p.lon,
             hours: p.opening_hours || '',
             distance: centerPoint.distanceTo([p.lat, p.lon])
@@ -589,11 +647,12 @@ async function findMeetingPlace() {
         resultLayer.clearLayers();
         resetPlaces();
 
-        locations.forEach((location, i) => {
-            L.marker([location.lat, location.lng])
+             locations.forEach((location, i) => {
+            L.marker([location.lat, location.lng], { icon: personPinIcon(colors[i]) })
                 .bindPopup(createPopup(`Person ${entries[i].person}`, entries[i].postcode))
                 .addTo(resultLayer);
         });
+
 
         const routes = routesForPlace(places[0], locations); 
 
@@ -601,28 +660,22 @@ async function findMeetingPlace() {
         map.fitBounds(bounds.pad(0.2));
 
         showMessage('Drawing routes…');
-        await animateRoutes(routes, token);
+        await animateRoutes(routes, token, colors);
         if (token !== searchToken) return;
 
-        // Same pin shape as the people markers, tinted red with CSS
-        const meetingIcon = L.icon({
-            iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-            iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-            shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-            iconSize: [25, 41],
-            iconAnchor: [12, 41],
-            shadowSize: [41, 41],
-            className: 'meeting-marker'
-        });
+        // Midpoint: an HTML marker (not SVG), so it does not grow during zoom animations
+const small_red_point = L.marker([center.lat, center.lng], {
+    icon: L.divIcon({
+        className: '',
+        html: '<div class="midpoint-dot"></div>',
+        iconSize: [12, 12],
+        iconAnchor: [6, 6]      // centre of the dot sits on the midpoint
+    }),
+    interactive: false,
+    keyboard: false
+}).addTo(resultLayer);
 
-        const meeting = L.marker([center.lat, center.lng], { icon: meetingIcon })
-            .addTo(resultLayer);
 
-        // Only bounce if the plugin loaded; the pin still shows either way
-        if (typeof meeting.bounce === 'function') {
-            meeting.setBouncingOptions({ bounceHeight: 40, bounceSpeed: 54, exclusive: true });
-            meeting.bounce(3); // bounce 3 times, then stop
-        }
 
         // Places around the midpoint (the radar keeps spinning until they arrive)
         showMessage('Looking for places nearby…');
@@ -668,9 +721,23 @@ async function findMeetingPlace() {
         ];
         await flyToBounds(L.latLngBounds(focusPoints).pad(0.35));
         if (token !== searchToken) return;
-
         await radiatePlaces(center, token);
         if (token !== searchToken) return;
+
+       // Fade the small red point out over ~300ms, then remove it
+let opacity = 1;
+const fade = setInterval(() => {
+    opacity -= 0.1;
+    small_red_point.setOpacity(Math.max(0, opacity));
+    if (opacity <= 0) {
+        clearInterval(fade);
+        small_red_point.remove();
+    }
+}, 10);
+
+
+        // Routes are drawn to the first place, so show it as the selected one
+        highlightPlace(placeMarkers[0]);
 
         placesReady = true;
     } catch (error) {
