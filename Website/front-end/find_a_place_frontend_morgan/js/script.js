@@ -42,11 +42,15 @@ const virtualLocations = [
     [51.5191, -0.0415]
 ];
 
-// Start with one person and the first virtual location.
+// Start with two person and the first virtual location.
 let personEntries = [
     {
         location: "",
         virtualLocationIndex: 0
+    },
+    {
+        location: "",
+        virtualLocationIndex: 1
     }
 ];
 
@@ -299,9 +303,13 @@ function renderPersonFields() {
             "aria-label",
             `Remove Person ${personNumber}`
         );
-        removeButton.disabled = personEntries.length === 1;
+        removeButton.disabled = personEntries.length <= 2;
 
         removeButton.addEventListener("click", () => {
+            if (personEntries.length <= 2) {
+                return;
+            }
+
             personEntries.splice(index, 1);
             renderPersonFields();
         });
