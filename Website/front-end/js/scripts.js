@@ -308,10 +308,9 @@ function renderPlaceList() {
     $placesBox.prop('hidden', !placeMarkers.length).scrollTop(0);
 }
 
-    if (selectedItem && selectedItem !== item) setPinSelected(selectedItem, false);
-
 // Picks a place: from the list (fly to it) or from the map (scroll the list)
 function selectPlace(item, fromMap = false) {
+    if (selectedItem && selectedItem !== item) setPinSelected(selectedItem, false);
     selectedItem = item;
 
     // It may be hidden at the current zoom level, so show it
