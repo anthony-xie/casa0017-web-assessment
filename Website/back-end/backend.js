@@ -53,7 +53,7 @@ async function findNearestPlaces(midpoint, category){
 
     const [pois] = await db.execute(
         //Selects the 3 POIs closest to the midpoint around a 6kmx6km box
-        `SELECT type, id, name, category, lat, lon, opening_hours, cuisine, postcode 
+        `SELECT osm_id, name, category, lat, lon, opening_hours, cuisine, postcode 
             FROM osm_venues
             WHERE category = ? AND lat BETWEEN ? AND ? AND lon BETWEEN ? AND ?
             ORDER BY (POW(lat - ?, 2) + POW((lon - ?) * COS(RADIANS(?)), 2)) ASC
@@ -81,7 +81,7 @@ export async function findMeetingPlaces(input){
     const { coords, category } = await parseInput(input);
     const midpoint = findMidPoint(coords);
     const pois = await findNearestPlaces(midpoint, category);
-    return { coords, pois };
+    return { coords, pois, midpoint };
 }
 
 //Function that returns the routes to the frontend
@@ -99,7 +99,7 @@ export async function routes(coords, poi){
 }
 
 export async function search(input){
-    const { coords, pois } = await findMeetingPlaces(input);
+    const { coords, pois, midpoint } = await findMeetingPlaces(input);
 
     //Routes for all POIs
     const allJourneys = await Promise.all(pois.map(poi => routes(coords, poi)));
@@ -126,7 +126,7 @@ export async function search(input){
         throw new AppError('No POIs found that everyone can reach', 404);
     }
 
-    return { coords, places };
+    return { coords, places, midpoint };
 }
 
 //Only return the fastest journey for each person
@@ -143,6 +143,7 @@ function formatRoutes(plans) {
                 mode: leg.mode?.name,
                 summary: leg.instruction?.summary,
                 minutes: leg.duration,
+                pathLine: leg.path?.lineString ? JSON.parse(leg.path.lineString) : []
                 
             }))
         };

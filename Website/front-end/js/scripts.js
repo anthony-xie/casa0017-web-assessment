@@ -5,17 +5,10 @@ const MAX_PEOPLE = 6;
 const SNAKE_MS = 2500;
 
 // Places around the midpoint
-const PLACE_RADIUS_M = 900;      // search radius in metres
 const PLACE_TRAVEL_MS = 700;     // how long one pin takes to fly out
 const PLACE_MAX_STAGGER_MS = 180;
 const PLACE_MIN_COUNT = 5;       // always show at least this many
 
-// Several public Overpass servers: ask them all, use the first good answer
-const OVERPASS_SERVERS = [
-    'https://overpass-api.de/api/interpreter',
-    'https://overpass.kumi.systems/api/interpreter',
-    'https://overpass.private.coffee/api/interpreter'
-];
 
 // How many places to show on the map at each zoom level
 function placeLimit(zoom) {
@@ -30,8 +23,8 @@ const PLACE_TYPES = {
     cafe:       { label: 'Café',       icon: 'bi-cup-hot-fill', color: '#a0522d' },
     restaurant: { label: 'Restaurant', icon: 'bi-fork-knife',   color: '#dc3545' },
     pub:        { label: 'Pub',        icon: 'bi-cup-straw',    color: '#6f42c1' },
-    bar:        { label: 'Bar',        icon: 'bi-cup-straw',    color: '#6f42c1' },
-    fast_food:  { label: 'Fast food',  icon: 'bi-bag-fill',     color: '#e08a00' }
+    park:        { label: 'Park',       icon: 'bi-tree-fill',    color: '#10781f' },
+    library:  { label: 'Library',    icon: 'bi-book',     color: '#e08a00' }
 };
 
 const map = L.map('map', {
@@ -198,164 +191,6 @@ function createPopup(title, text) {
     return $el[0];
 }
 
-/* ---------- postcode lookup ---------- */
-
-async function lookupPostcodes(postcodes) {
-    const response = await fetch('https://api.postcodes.io/postcodes', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ postcodes })
-    });
-    if (!response.ok) {
-        throw friendlyError('The postcode service is not responding. Please try again in a moment.');
-    }
-
-    const { result } = await response.json();
-
-    const missing = result.filter(item => !item.result).map(item => `"${item.query}"`);
-    if (missing.length) {
-        throw friendlyError(
-            missing.length === 1
-                ? `We couldn't find ${missing[0]}. Check the postcode and try again.`
-                : `We couldn't find ${missing.join(', ')}. Check those postcodes and try again.`
-        );
-    }
-
-    return result.map(item => ({ lat: item.result.latitude, lng: item.result.longitude }));
-}
-
-/* ---------- nearby places (OpenStreetMap, via Overpass) ---------- */
-
-// Asks every server at once and uses the first good answer
-async function overpassRequest(query) {
-    const body = 'data=' + encodeURIComponent(query);
-
-    const attempts = OVERPASS_SERVERS.map(async url => {
-        const controller = new AbortController();
-        const timer = setTimeout(() => controller.abort(), 12000);
-        try {
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body,
-                signal: controller.signal
-            });
-            if (!response.ok) throw new Error('Overpass ' + response.status);
-            return await response.json();
-        } finally {
-            clearTimeout(timer);
-        }
-    });
-
-    try {
-        return await Promise.any(attempts);
-    } catch {
-        throw friendlyError('The places service is busy. Please try again in a moment.');
-    }
-}
-
-function formatAddress(tags) {
-    const street = [tags['addr:housenumber'], tags['addr:street']].filter(Boolean).join(' ');
-    return [street, tags['addr:city']].filter(Boolean).join(', ');
-}
-
-// Many places have no postcode in OpenStreetMap, so ask postcodes.io
-// for the nearest postcode to their location.
-async function fillPostcodes(places) {
-    const missing = places.filter(place => !place.postcode);
-    if (!missing.length) return;
-
-    try {
-        const response = await fetch('https://api.postcodes.io/postcodes', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                geolocations: missing.map(place => ({
-                    longitude: place.lng,
-                    latitude: place.lat,
-                    limit: 1,
-                    radius: 200
-                }))
-            })
-        });
-        if (!response.ok) return;
-
-        const { result } = await response.json();
-        result.forEach((item, i) => {
-            const found = item.result && item.result[0];
-            if (found) {
-                missing[i].postcode = found.postcode;
-                missing[i].postcodeIsNearest = true;
-            }
-        });
-    } catch (error) {
-        console.error(error); // postcodes are a nice extra, not essential
-    }
-}
-
-// Returns places around the center, best first. Each type takes turns,
-// so the first few are a mix (a café, a restaurant, a pub...) rather than
-// five of the same kind.
-async function getNearbyPlaces(center) {
-    const key = center.lat.toFixed(3) + ',' + center.lng.toFixed(3);
-    if (placesCache.has(key)) return placesCache.get(key);
-
-    const types = Object.keys(PLACE_TYPES).join('|');
-    const query = `
-        [out:json][timeout:10];
-        node["amenity"~"^(${types})$"]["name"]
-            (around:${PLACE_RADIUS_M},${center.lat},${center.lng});
-        out body 80;
-    `;
-
-    const data = await overpassRequest(query);
-    const centerPoint = L.latLng(center.lat, center.lng);
-
-    // Group by type, nearest first inside each group
-    const groups = {};
-    data.elements
-        .filter(item => item.tags && item.tags.name && PLACE_TYPES[item.tags.amenity])
-        .map(item => {
-            const tags = item.tags;
-            const website = tags.website || tags['contact:website'] || '';
-            return {
-                name: tags.name,
-                kind: tags.amenity,
-                label: PLACE_TYPES[tags.amenity].label,
-                lat: item.lat,
-                lng: item.lon,
-                distance: centerPoint.distanceTo([item.lat, item.lon]),
-                address: formatAddress(tags),
-                postcode: tags['addr:postcode'] || '',
-                postcodeIsNearest: false,
-                hours: tags.opening_hours || '',
-                phone: tags.phone || tags['contact:phone'] || '',
-                website: /^https?:\/\//i.test(website) ? website : ''
-            };
-        })
-        .sort((a, b) => a.distance - b.distance)
-        .forEach(place => {
-            (groups[place.kind] = groups[place.kind] || []).push(place);
-        });
-
-    // Take one from each group per round
-    const ranked = [];
-    const groupList = Object.values(groups);
-    const rounds = Math.max(0, ...groupList.map(group => group.length));
-    for (let round = 0; round < rounds; round++) {
-        groupList
-            .map(group => group[round])
-            .filter(Boolean)
-            .sort((a, b) => a.distance - b.distance)
-            .forEach(place => ranked.push(place));
-    }
-
-    const result = ranked.slice(0, placeLimit(99));
-    await fillPostcodes(result);
-
-    placesCache.set(key, result);
-    return result;
-}
 
 /* ---------- place pins and the list in the sidebar ---------- */
 
@@ -391,8 +226,7 @@ function buildPlaceCard(place) {
     const $main = $('<div class="place-card-main">')
         .append($('<div class="place-card-name">').text(place.name))
         .append($('<div class="place-card-meta">')
-            .text(`${place.label} · ${formatDistance(place.distance)} from midpoint`))
-        .append($('<div class="place-card-line">').text(place.address || 'Address not listed'));
+            .text(`${place.label} · ${formatDistance(place.distance)} from midpoint`));
 
     if (place.postcode) {
         $main.append($('<div class="place-card-line">')
@@ -404,18 +238,6 @@ function buildPlaceCard(place) {
             place.hours ? place.hours.replace(/;\s*/g, '\n') : 'Opening hours not listed'
         )
     );
-
-    if (place.phone) {
-        $main.append($('<div class="place-card-line">').text(place.phone));
-    }
-    if (place.website) {
-        $main.append(
-            $('<a class="place-card-link" target="_blank" rel="noopener noreferrer">')
-                .attr('href', place.website)
-                .text('Website')
-                .on('click', event => event.stopPropagation())
-        );
-    }
 
     return $('<li class="place-card" tabindex="0" role="button">').append($icon, $main);
 }
@@ -591,26 +413,6 @@ function cleanRoute(points, from, to) {
     return cleaned;
 }
 
-// Returns an array of [lat, lng] points that follow real roads.
-async function fetchRoute(from, to) {
-    const url = 'https://router.project-osrm.org/route/v1/driving/' +
-        `${from.lng},${from.lat};${to.lng},${to.lat}` +
-        '?overview=full&geometries=geojson';
-
-    const response = await fetch(url);
-    if (!response.ok) {
-        throw friendlyError('The route service is busy. Please try again in a moment.');
-    }
-
-    const data = await response.json();
-    if (data.code !== 'Ok' || !data.routes.length) {
-        throw friendlyError("We couldn't find a road route for one of the postcodes.");
-    }
-
-    // OSRM returns [lng, lat]; Leaflet wants [lat, lng]
-    const points = data.routes[0].geometry.coordinates.map(([lng, lat]) => [lat, lng]);
-    return cleanRoute(points, from, to);
-}
 
 function routeLengthMeters(points) {
     let total = 0;
@@ -618,6 +420,16 @@ function routeLengthMeters(points) {
         total += L.latLng(points[i - 1]).distanceTo(L.latLng(points[i]));
     }
     return total;
+}
+
+function routesForPlace(place, locations){
+    return place.routes.map((route, i) =>
+        cleanRoute(
+            route.legs.flatMap(leg => leg.pathLine),   // join every leg's points
+            locations[i],                          // person i's start
+            { lat: place.lat, lng: place.lon }     // the place
+        )
+    );
 }
 
 // Draws every route with the snake animation, all starting together.
@@ -693,21 +505,27 @@ async function findMeetingPlace() {
     showMessage('Finding a meeting point…');
 
     try {
-        const locations = await lookupPostcodes(entries.map(e => e.postcode));
-        const center = {
-            lat: locations.reduce((sum, p) => sum + p.lat, 0) / locations.length,
-            lng: locations.reduce((sum, p) => sum + p.lng, 0) / locations.length
-        };
-
-        // Start looking for places now, while the routes load.
-        // If this fails, the routes still show.
-        const placesPromise = getNearbyPlaces(center).catch(error => {
-            console.error(error);
-            return null;
+        const category = $('#category').val();
+        const res = await fetch('/api/search', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ postcodes: entries.map(e => e.postcode), category })
         });
+        const data = await res.json();
+        if (!res.ok) throw friendlyError(data.error);       // shows e.g. "One or more postcodes are outside of London"
 
-        showMessage('Finding routes…');
-        const routes = await Promise.all(locations.map(l => fetchRoute(l, center)));
+        const locations = data.coords.map(c => ({ lat: c.latitude, lng: c.longitude }));
+        const center = { lat: data.midpoint.latitude, lng: data.midpoint.longitude };
+        const centerPoint = L.latLng(center.lat, center.lng);
+        const places = data.places.map(p => ({
+            ...p,
+            kind: category,
+            label: PLACE_TYPES[category].label,
+            lng: p.lon,
+            hours: p.opening_hours || '',
+            distance: centerPoint.distanceTo([p.lat, p.lon])
+        }));
+
         if (token !== searchToken) return;
 
         resultLayer.clearLayers();
@@ -718,6 +536,8 @@ async function findMeetingPlace() {
                 .bindPopup(createPopup(`Person ${entries[i].person}`, entries[i].postcode))
                 .addTo(resultLayer);
         });
+
+        const routes = routesForPlace(places[0], locations); 
 
         const bounds = L.latLngBounds(routes.flat());
         map.fitBounds(bounds.pad(0.2));
@@ -748,8 +568,6 @@ async function findMeetingPlace() {
 
         // Places around the midpoint (the radar keeps spinning until they arrive)
         showMessage('Looking for places nearby…');
-        const places = await placesPromise;
-        if (token !== searchToken) return;
 
         setSearching(false);
 
