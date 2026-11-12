@@ -8,9 +8,10 @@ date: "10 Dec 2020"
 
 -->
 
-# Final Group Report Title Goes Here
+# Find a Place
 
-Team Name or Group Authors
+Team Name: Chinese can fly  
+Team authors: Qingshan Zhang, Anthony Xie, Monong Yang, Jinhao Zhong
 
 ## Abstract
 
