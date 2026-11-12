@@ -20,11 +20,11 @@ function placeLimit(zoom) {
 
 // Look of each kind of place. Icons come from Bootstrap Icons.
 const PLACE_TYPES = {
-    cafe:       { label: 'Café',       icon: 'bi-cup-hot-fill', color: '#a0522d' },
-    restaurant: { label: 'Restaurant', icon: 'bi-fork-knife',   color: '#dc3545' },
-    pub:        { label: 'Pub',        icon: 'bi-cup-straw',    color: '#6f42c1' },
-    park:        { label: 'Park',       icon: 'bi-tree-fill',    color: '#10781f' },
-    library:  { label: 'Library',    icon: 'bi-book',     color: '#e08a00' }
+    cafe: { label: 'Café', icon: 'bi-cup-hot-fill', color: '#a0522d' },
+    restaurant: { label: 'Restaurant', icon: 'bi-fork-knife', color: '#dc3545' },
+    pub: { label: 'Pub', icon: 'bi-cup-straw', color: '#6f42c1' },
+    park: { label: 'Park', icon: 'bi-tree-fill', color: '#10781f' },
+    library: { label: 'Library', icon: 'bi-book', color: '#e08a00' }
 };
 
 // One fixed colour per person (by their row in the form), checked for colour-blind safety.
@@ -139,8 +139,8 @@ function setSearching(on, point) {
                 icon: L.divIcon({
                     className: '',
                     html: '<div class="searching active">' +
-                          '<span></span><span></span><span></span>' +
-                          '<i class="searching-dot"></i></div>',
+                        '<span></span><span></span><span></span>' +
+                        '<i class="searching-dot"></i></div>',
                     iconSize: [0, 0],
                     iconAnchor: [0, 0]
                 }),
@@ -401,16 +401,38 @@ async function selectPlace(item, fromMap = false) {
     routeLayer.clearLayers();
     routeToken++;
 
-    // Fit every route to this place on screen (route points, not just the ends,
-    // because a route can curve outside the start-to-place box)
+    // 1. Zoom out: show all routes to the newly selected place
     const routes = routesForPlace(item.place, searchState.locations);
     await flyToBounds(L.latLngBounds(routes.flat()).pad(0.2));
 
-    // The user may have picked another place (or started a new search) while the map was moving
     if (item !== selectedItem) return;
 
-    drawRoutesTo(item.place);
+    // 2. Draw the new routes only once
+    await drawRoutesTo(item.place);
+
+    if (item !== selectedItem) return;
+
+    // 3. Keep the routes and travel times visible for 2 seconds
+    await sleep(2000);
+
+    if (item !== selectedItem) return;
+
+    // 4. Zoom in again, focusing on the selected place and nearby places
+    const focusPoints = [
+        [item.place.lat, item.place.lng],
+        ...placeMarkers
+            .filter(p => p !== item)
+            .slice(0, PLACE_MIN_COUNT - 1)
+            .map(p => [p.place.lat, p.place.lng])
+    ];
+
+    await flyToBounds(L.latLngBounds(focusPoints).pad(0.35));
+
+    if (item !== selectedItem) return;
+
+    // 5. Open the selected place popup
     if (!fromMap) item.marker.openPopup();
+
 }
 
 function resetPlaces() {
@@ -423,17 +445,30 @@ function resetPlaces() {
 }
 
 
-
-// Zoom the map in around the midpoint and the first few places
-function flyToBounds(bounds) {
+function flyToBounds(bounds, options = {}) {
     return new Promise(resolve => {
         const done = () => {
             clearTimeout(timer);
             resolve();
         };
-        const timer = setTimeout(done, 2000); // in case no move is needed
+        const timer = setTimeout(done, 2000); // in case no move happens
         map.once('moveend', done);
-        map.flyToBounds(bounds, { maxZoom: 16, duration: 1 });
+
+        // Always move a little, even when the view is already about right,
+        // so there is a visible zoom every time
+        const target = map._getBoundsCenterZoom(bounds, { maxZoom: options.maxZoom || 16 });
+        const sameView =
+            Math.abs(target.zoom - map.getZoom()) < 0.05 &&
+            map.getCenter().distanceTo(target.center) < 20;
+
+        if (sameView) {
+            clearTimeout(timer);
+            map.once('zoomend', done);
+            map.flyTo(target.center, Math.min(target.zoom + 0.4, 18), { duration: 0.8 });
+            return;
+        }
+
+        map.flyToBounds(bounds, { maxZoom: options.maxZoom || 16, duration: 1 });
     });
 }
 
@@ -557,7 +592,7 @@ function routeLengthPixels(points) {
     }
     return total;
 }
-function routesForPlace(place, locations){
+function routesForPlace(place, locations) {
     return place.routes.map((route, i) =>
         cleanRoute(
             route.legs.flatMap(leg => leg.pathLine),   // join every leg's points
@@ -595,7 +630,7 @@ function animateRoutes(routes, token, colors, tooltips) {
             done = true;
             clearTimeout(safety);
             //Only add hover areas if this search is still the current one
-            if(tooltips && token === routeToken) addRouteHover(routes, lines, tooltips);
+            if (tooltips && token === routeToken) addRouteHover(routes, lines, tooltips);
             resolve();
         }
 
@@ -607,11 +642,12 @@ function animateRoutes(routes, token, colors, tooltips) {
         // If something goes wrong, do not leave the page waiting forever
         safety = setTimeout(finish, SNAKE_MS * 3 + 2000);
 
-        lines.forEach((line, i) => {            
+        lines.forEach((line, i) => {
             // Same on-screen duration for every line: longer routes simply move faster
             const pixels = routeLengthPixels(routes[i]);
-            line.options.snakingSpeed = Math.max(1, pixels / (SNAKE_MS / 1000));
-
+            // Short routes finish quickly; long routes are capped at SNAKE_MS
+            const duration = Math.min(SNAKE_MS, Math.max(400, pixels * 4));   // ms
+            line.options.snakingSpeed = Math.max(1, pixels / (duration / 1000));
 
             line.on('snakeend', finishOne);
 
@@ -633,20 +669,98 @@ function routeTooltip(route) {
 }
 
 // Invisible, wider copies of the routes that catch the mouse and show the travel time
+
 function addRouteHover(routes, lines, tooltips) {
-    routes.forEach((points, i) => {
-        L.polyline(points, { weight: 18, opacity: 0 })   // interactive by default
-            .bindTooltip(tooltips[i], { sticky: true, direction: 'top', offset: [0, -8] })
+    const hoverLines = routes.map((points, i) =>
+        L.polyline(points, { weight: 18, opacity: 0 })
+            .bindTooltip(tooltips[i], {
+                sticky: true,
+                direction: 'top',
+                offset: [0, -8]
+            })
             .on('mouseover', () => lines[i].setStyle({ weight: 7 }))
             .on('mouseout', () => lines[i].setStyle({ weight: 4 }))
-            .addTo(routeLayer);
+            .addTo(routeLayer)
+    );
+
+    // Find a point at a given percentage along a route
+    function pointAtFraction(points, fraction) {
+        const lengths = [];
+        let total = 0;
+
+        for (let i = 1; i < points.length; i++) {
+            const distance = map.distance(points[i - 1], points[i]);
+            lengths.push(distance);
+            total += distance;
+        }
+
+        let target = total * fraction;
+
+        for (let i = 0; i < lengths.length; i++) {
+            if (target <= lengths[i]) {
+                const t = lengths[i] === 0 ? 0 : target / lengths[i];
+
+                return L.latLng(
+                    points[i][0] + (points[i + 1][0] - points[i][0]) * t,
+                    points[i][1] + (points[i + 1][1] - points[i][1]) * t
+                );
+            }
+
+            target -= lengths[i];
+        }
+
+        return L.latLng(points[points.length - 1]);
+    }
+
+    // Try positions along each route, keeping labels apart
+    const fractions = [0.5, 0.4, 0.6, 0.3, 0.7, 0.2, 0.8];
+    const labelPositions = [];
+    const minSpacing = 75;
+
+    const intro = routes.map((points, i) => {
+        let bestPoint = pointAtFraction(points, 0.5);
+        let bestDistance = -1;
+
+        for (const fraction of fractions) {
+            const candidate = pointAtFraction(points, fraction);
+            const pixel = map.latLngToContainerPoint(candidate);
+
+            const nearestDistance = labelPositions.length
+                ? Math.min(...labelPositions.map(previous =>
+                    pixel.distanceTo(previous)
+                ))
+                : Infinity;
+
+            if (nearestDistance > bestDistance) {
+                bestDistance = nearestDistance;
+                bestPoint = candidate;
+            }
+
+            if (nearestDistance >= minSpacing) break;
+        }
+
+        labelPositions.push(map.latLngToContainerPoint(bestPoint));
+
+        return L.tooltip({
+            permanent: true,
+            direction: 'top',
+            offset: [0, -8],
+            className: 'route-intro-tooltip'
+        })
+            .setLatLng(bestPoint)
+            .setContent(tooltips[i])
+            .addTo(map);
     });
+
+    // Keep the time labels visible briefly
+    setTimeout(() => intro.forEach(tip => map.removeLayer(tip)), 3000);
 }
 
 // Clears the current routes and draws everyone's route to the given place
 function drawRoutesTo(place) {
     const token = ++routeToken;
     routeLayer.clearLayers();
+    document.querySelectorAll('.route-intro-tooltip').forEach(el => el.remove());
 
     const routes = routesForPlace(place, searchState.locations);
     const tooltips = place.routes.map(route => routeTooltip(route));
@@ -683,7 +797,7 @@ async function findMeetingPlace() {
         if (!res.ok) throw friendlyError(data.error);       // shows e.g. "One or more postcodes are outside of London"
 
         const locations = data.coords.map(c => ({ lat: c.latitude, lng: c.longitude }));
-                // Colour for each person, matched to their row in the form
+        // Colour for each person, matched to their row in the form
         const colors = entries.map(e => PERSON_COLORS[e.person - 1]);
         searchState = { locations, colors };
 
@@ -705,35 +819,37 @@ async function findMeetingPlace() {
         routeLayer.clearLayers();
         resetPlaces();
 
-             locations.forEach((location, i) => {
+        locations.forEach((location, i) => {
             L.marker([location.lat, location.lng], { icon: personPinIcon(colors[i]) })
                 .bindPopup(createPopup(`Person ${entries[i].person}`, entries[i].postcode))
                 .addTo(resultLayer);
         });
 
 
-        const routes = routesForPlace(places[0], locations); 
-
+        const routes = routesForPlace(places[0], locations);
 
 
         const bounds = L.latLngBounds(routes.flat());
-        map.fitBounds(bounds.pad(0.2));
-
+        await flyToBounds(bounds.pad(0.2), { maxZoom: 13 });
+        if (token !== searchToken) return;
         showMessage('Drawing routes…');
         await drawRoutesTo(places[0]);
         if (token !== searchToken) return;
+        await sleep(2000);
+        if (token !== searchToken) return;
+
 
         // Midpoint: an HTML marker (not SVG), so it does not grow during zoom animations
-const small_red_point = L.marker([center.lat, center.lng], {
-    icon: L.divIcon({
-        className: '',
-        html: '<div class="midpoint-dot"></div>',
-        iconSize: [12, 12],
-        iconAnchor: [6, 6]      // centre of the dot sits on the midpoint
-    }),
-    interactive: false,
-    keyboard: false
-}).addTo(resultLayer);
+        const small_red_point = L.marker([center.lat, center.lng], {
+            icon: L.divIcon({
+                className: '',
+                html: '<div class="midpoint-dot"></div>',
+                iconSize: [12, 12],
+                iconAnchor: [6, 6]      // centre of the dot sits on the midpoint
+            }),
+            interactive: false,
+            keyboard: false
+        }).addTo(resultLayer);
 
 
 
@@ -762,6 +878,23 @@ const small_red_point = L.marker([center.lat, center.lng], {
                 }).bindPopup(createPopup(place.name, place.label))
             };
             item.marker.on('click', () => selectPlace(item, true));
+            // Enlarge the pin when the mouse moves over it
+            item.marker.on('mouseover', () => {
+                const el = item.marker.getElement();
+                const pin = el ? el.querySelector('.place-pin-scale') : null;
+
+                if (pin) {
+                    const scale = item === selectedItem ? 1.55 : 1.18;
+                    pin.style.transform = `scale(${scale})`;
+                }
+
+                item.marker.setZIndexOffset(1200);
+            });
+
+            // Restore the correct size when the mouse moves away
+            item.marker.on('mouseout', () => {
+                setPinSelected(item, item === selectedItem);
+            });
 
             // Leaflet makes a new element each time a pin is re-added (zooming hides/shows pins)
             item.marker.on('add', () => {
@@ -784,16 +917,16 @@ const small_red_point = L.marker([center.lat, center.lng], {
         await radiatePlaces(center, token);
         if (token !== searchToken) return;
 
-       // Fade the small red point out over ~300ms, then remove it
-let opacity = 1;
-const fade = setInterval(() => {
-    opacity -= 0.1;
-    small_red_point.setOpacity(Math.max(0, opacity));
-    if (opacity <= 0) {
-        clearInterval(fade);
-        small_red_point.remove();
-    }
-}, 10);
+        // Fade the small red point out over ~300ms, then remove it
+        let opacity = 1;
+        const fade = setInterval(() => {
+            opacity -= 0.1;
+            small_red_point.setOpacity(Math.max(0, opacity));
+            if (opacity <= 0) {
+                clearInterval(fade);
+                small_red_point.remove();
+            }
+        }, 10);
 
 
         // Routes are drawn to the first place, so show it as the selected one
