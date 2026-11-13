@@ -3,8 +3,8 @@ const MAX_PEOPLE = 6;
 
 // Route animation: how long each line takes to draw (ms)
 const SNAKE_MS = 2500;
-const ROUTE_LABEL_MS = 3000;
-const ROUTE_LABEL_WAIT_MS = 3200;
+const ROUTE_LABEL_MS = 1500;
+const ROUTE_LABEL_WAIT_MS = 1700;
 
 // Places around the midpoint
 const PLACE_TRAVEL_MS = 700;     // how long one pin takes to fly out

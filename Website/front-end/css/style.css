@@ -461,7 +461,7 @@ body {
     display: flex;
     align-items: flex-start;
     padding-bottom: 0;
-    margin-bottom: 24px;
+    margin-bottom: 14px;
     font-size: 24px;
     font-weight: 600;
     letter-spacing: -0.3px;
@@ -593,6 +593,7 @@ body {
     top: 0;
     z-index: 1;
     margin: 0;
+    margin-bottom: 8px;
     padding: 8px 0;
     background: #fafaf9;
     font-size: 20px;
@@ -893,7 +894,7 @@ body {
     display: flex;
     align-items: flex-start;
     padding-bottom: 0;
-    margin-bottom: 24px;
+    margin-bottom: 14px;
     font-size: 24px;
     font-weight: 600;
     letter-spacing: -0.3px;
@@ -969,4 +970,26 @@ body {
 /* Remove the blue focus rectangle when clicking a route */
 .leaflet-container .route-hover-line:focus {
     outline: none !important;
+}
+/* Desktop: scroll the entire sidebar */
+@media (min-width: 901px) {
+
+    .sidebar {
+        height: 100%;
+        overflow-y: auto !important;
+        overflow-x: hidden;
+    }
+
+    .sidebar-body {
+        height: auto;
+        min-height: 100%;
+        overflow: visible;
+    }
+
+    .places {
+        flex: none;
+        min-height: auto;
+        overflow: visible;
+        padding-bottom: 20px;
+    }
 }
