@@ -3,6 +3,8 @@ const MAX_PEOPLE = 6;
 
 // Route animation: how long each line takes to draw (ms)
 const SNAKE_MS = 2500;
+const ROUTE_LABEL_MS = 3000;
+const ROUTE_LABEL_WAIT_MS = 3200;
 
 // Places around the midpoint
 const PLACE_TRAVEL_MS = 700;     // how long one pin takes to fly out
@@ -105,6 +107,10 @@ let searchToken = 0;
 let placeMarkers = [];   // [{ place, marker, shown, $card }], best first
 let placesReady = false; // true once the pins have finished flying out
 let selectedItem = null; // the place picked in the list or on the map
+// Prevent place-name previews while routes are being switched
+let placeTransitionActive = false;
+let routeLabelsActive = false;
+let routeIntroTooltips = [];
 const placesCache = new Map();
 
 /* ---------- messages ---------- */
@@ -384,7 +390,32 @@ function highlightPlace(item) {
 // Picks a place: from the list or from the map.
 // Zooms out so everyone's start and the place are visible, then draws the routes.
 async function selectPlace(item, fromMap = false) {
-    const changed = item !== selectedItem;   // check before highlightPlace updates selectedItem
+    const changed = item !== selectedItem;
+    placeTransitionActive = true;
+
+    // Remove all old route and place labels before switching
+    routeIntroTooltips.forEach(tip => map.removeLayer(tip));
+    routeIntroTooltips = [];
+    routeLabelsActive = false;
+
+    // Close the previous place's popup and all hover previews
+    placeMarkers.forEach(p => {
+        // Remove any hover preview
+        if (p.hoverTooltip && map.hasLayer(p.hoverTooltip)) {
+            map.removeLayer(p.hoverTooltip);
+        }
+
+        // Close every other place's popup
+        if (p !== item) {
+            p.marker.closePopup();
+        }
+    });
+
+    // If this was a map click, close Leaflet's automatically opened popup
+    if (fromMap) {
+        item.marker.closePopup();
+    }
+
     highlightPlace(item);
 
     if (fromMap) {
@@ -393,10 +424,14 @@ async function selectPlace(item, fromMap = false) {
 
     // Same place clicked again, or no search yet: nothing to redraw
     if (!changed || !searchState) {
-        if (!fromMap) item.marker.openPopup();
+        if (searchState && fromMap) {
+            await sleep(3200);
+            if (item !== selectedItem) return;
+        }
+        placeTransitionActive = false;
+        item.marker.openPopup();
         return;
     }
-
     // Remove the old routes straight away and cancel any route animation still running
     routeLayer.clearLayers();
     routeToken++;
@@ -412,8 +447,8 @@ async function selectPlace(item, fromMap = false) {
 
     if (item !== selectedItem) return;
 
-    // 3. Keep the routes and travel times visible for 2 seconds
-    await sleep(2000);
+    // 3. Wait until the travel-time labels have disappeared
+    await sleep(ROUTE_LABEL_WAIT_MS);
 
     if (item !== selectedItem) return;
 
@@ -431,15 +466,43 @@ async function selectPlace(item, fromMap = false) {
     if (item !== selectedItem) return;
 
     // 5. Open the selected place popup
-    if (!fromMap) item.marker.openPopup();
+    placeTransitionActive = false;
+    item.marker.openPopup();
 
 }
 
 function resetPlaces() {
+
+    // 1. Remove all old place-name hover labels
+    placeMarkers.forEach(item => {
+        if (item.hoverTooltip && map.hasLayer(item.hoverTooltip)) {
+            map.removeLayer(item.hoverTooltip);
+        }
+
+        // Close any popup left open by the previous search
+        if (item.marker && item.marker.isPopupOpen()) {
+            item.marker.closePopup();
+        }
+    });
+
+    // 2. Remove any remaining route intro labels
+    routeIntroTooltips.forEach(tip => {
+        if (map.hasLayer(tip)) {
+            map.removeLayer(tip);
+        }
+    });
+    routeIntroTooltips = [];
+
+    // 3. Reset label and transition states
+    routeLabelsActive = false;
+    placeTransitionActive = false;
+
+    // 4. Clear the old place markers and list
     placesLayer.clearLayers();
     placeMarkers = [];
     placesReady = false;
     selectedItem = null;
+
     $placeList.empty();
     $placesBox.prop('hidden', true);
 }
@@ -752,8 +815,10 @@ function addRouteHover(routes, lines, tooltips) {
             .addTo(map);
     });
 
-    // Keep the time labels visible briefly
-    setTimeout(() => intro.forEach(tip => map.removeLayer(tip)), 3000);
+    // Remove travel-time labels before showing place popups
+    setTimeout(() => {
+        intro.forEach(tip => map.removeLayer(tip));
+    }, ROUTE_LABEL_MS);
 }
 
 // Clears the current routes and draws everyone's route to the given place
@@ -835,7 +900,9 @@ async function findMeetingPlace() {
         showMessage('Drawing routes…');
         await drawRoutesTo(places[0]);
         if (token !== searchToken) return;
-        await sleep(2000);
+
+        // Wait for travel-time labels to disappear before showing nearby places
+        await sleep(ROUTE_LABEL_WAIT_MS);
         if (token !== searchToken) return;
 
 
@@ -867,19 +934,51 @@ async function findMeetingPlace() {
             return;
         }
 
+
         placeMarkers = places.map(place => {
             const item = {
                 place,
                 shown: false,
                 $card: null,
+                hoverTooltip: null,
+
                 marker: L.marker([center.lat, center.lng], {
                     icon: placePinIcon(place.kind),
                     opacity: 0
                 }).bindPopup(createPopup(place.name, place.label))
             };
+
+            // Create a separate tooltip, but do not bind it to the marker.
+            // This prevents Leaflet from automatically showing a second label.
+            item.hoverTooltip = L.tooltip({
+                direction: 'top',
+                offset: [0, -36],
+                opacity: 0.95,
+                className: 'place-name-tooltip'
+            }).setContent(createPopup(place.name, place.label));
+
             item.marker.on('click', () => selectPlace(item, true));
-            // Enlarge the pin when the mouse moves over it
+
+            item.marker.on('popupopen', () => {
+                if (map.hasLayer(item.hoverTooltip)) {
+                    map.removeLayer(item.hoverTooltip);
+                }
+            });
+
+            // Hover: close every other place's preview and popup first
             item.marker.on('mouseover', () => {
+                placeMarkers.forEach(other => {
+                    if (other === item) return;
+
+                    if (other.hoverTooltip && map.hasLayer(other.hoverTooltip)) {
+                        map.removeLayer(other.hoverTooltip);
+                    }
+
+                    if (other.marker.isPopupOpen()) {
+                        other.marker.closePopup();
+                    }
+                });
+
                 const el = item.marker.getElement();
                 const pin = el ? el.querySelector('.place-pin-scale') : null;
 
@@ -889,20 +988,53 @@ async function findMeetingPlace() {
                 }
 
                 item.marker.setZIndexOffset(1200);
+
+                // Only show the hover preview if this place has no open popup
+                if (
+                    !placeTransitionActive &&
+                    !routeLabelsActive &&
+                    !item.marker.isPopupOpen()
+                ) {
+                    item.hoverTooltip
+                        .setLatLng(item.marker.getLatLng())
+                        .addTo(map);
+                }
             });
 
-            // Restore the correct size when the mouse moves away
+            // Mouse leaves: remove the preview and restore the pin size
             item.marker.on('mouseout', () => {
+                // Remove the tooltip of the place the mouse just left
+                if (map.hasLayer(item.hoverTooltip)) {
+                    map.removeLayer(item.hoverTooltip);
+                }
+
+                // Restore the selected place's name when the mouse is not
+                if (
+                    !placeTransitionActive &&
+                    !routeLabelsActive &&
+                    selectedItem &&
+                    selectedItem.shown &&
+                    !selectedItem.marker.isPopupOpen()
+                ) {
+                    selectedItem.hoverTooltip
+                        .setLatLng(selectedItem.marker.getLatLng())
+                        .addTo(map);
+                }
+
+                // Restore the pin size
                 setPinSelected(item, item === selectedItem);
             });
 
-            // Leaflet makes a new element each time a pin is re-added (zooming hides/shows pins)
+            // Restore selected size when Leaflet recreates the marker element
             item.marker.on('add', () => {
-                if (item === selectedItem) setPinSelected(item, true);
+                if (item === selectedItem) {
+                    setPinSelected(item, true);
+                }
             });
 
             return item;
         });
+
 
         renderPlaceList();
         showMessage(`${places.length} places near the midpoint. Pick one from the list or the map.`);
@@ -928,11 +1060,13 @@ async function findMeetingPlace() {
             }
         }, 10);
 
-
         // Routes are drawn to the first place, so show it as the selected one
         highlightPlace(placeMarkers[0]);
 
         placesReady = true;
+
+        // Show the first recommended place
+        placeMarkers[0].marker.openPopup();
     } catch (error) {
         console.error(error);
 
