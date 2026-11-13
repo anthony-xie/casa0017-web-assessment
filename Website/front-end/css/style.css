@@ -883,6 +883,23 @@ body {
         padding: 20px;
     }
 
+    .sidebar-toggle i {
+        display: inline-block;
+        transition: transform 200ms ease;
+    }
+
+
+    @media (max-width: 900px) {
+        .sidebar-toggle i {
+            transform: rotate(-90deg);
+        }
+
+
+        .sidebar.collapsed .sidebar-toggle i {
+            transform: rotate(90deg);
+        }
+    }
+
     /* The whole panel scrolls here, not just the list */
     .places {
         flex: none;
@@ -890,15 +907,15 @@ body {
     }
 
     .logo {
-    height: auto;
-    display: flex;
-    align-items: flex-start;
-    padding-bottom: 0;
-    margin-bottom: 14px;
-    font-size: 24px;
-    font-weight: 600;
-    letter-spacing: -0.3px;
-}
+        height: auto;
+        display: flex;
+        align-items: flex-start;
+        padding-bottom: 0;
+        margin-bottom: 14px;
+        font-size: 24px;
+        font-weight: 600;
+        letter-spacing: -0.3px;
+    }
 
 }
 
@@ -971,6 +988,7 @@ body {
 .leaflet-container .route-hover-line:focus {
     outline: none !important;
 }
+
 /* Desktop: scroll the entire sidebar */
 @media (min-width: 901px) {
 
