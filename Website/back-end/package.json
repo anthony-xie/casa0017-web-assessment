@@ -1,7 +1,7 @@
 {
   "type": "module",
   "scripts": {
-    "start": "node Website/back-end/server.js"
+    "start": "node server.js"
   },
   "dependencies": {
     "dotenv": "^18.0.10",

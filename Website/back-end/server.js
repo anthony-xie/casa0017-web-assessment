@@ -28,5 +28,7 @@ app.post("/api/search", async (req, res) => {
   }
 });
 
-const port = Number(process.env.PORT) || 3000;
-app.listen(port, () => console.log(`findaplace at http://localhost:${port}`));
+const port = Number(process.env.PORT) || 3001;
+app.listen(port, "0.0.0.0", () => {
+  console.log(`findaplace running on port ${port}`);
+});
