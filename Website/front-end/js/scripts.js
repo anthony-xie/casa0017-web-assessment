@@ -735,7 +735,9 @@ function routeTooltip(route) {
 
 function addRouteHover(routes, lines, tooltips) {
     const hoverLines = routes.map((points, i) =>
-        L.polyline(points, { weight: 18, opacity: 0 })
+        L.polyline(points, { weight: 18, opacity: 0,
+            className: 'route-hover-line'
+        })
             .bindTooltip(tooltips[i], {
                 sticky: true,
                 direction: 'top',

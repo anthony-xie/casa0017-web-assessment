@@ -965,3 +965,8 @@ body {
     font-size: 13px;
     font-weight: 600;
 }
+
+/* Remove the blue focus rectangle when clicking a route */
+.leaflet-container .route-hover-line:focus {
+    outline: none !important;
+}
