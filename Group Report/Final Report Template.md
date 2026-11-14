@@ -40,6 +40,56 @@ The following sections explain how these aims were met, in the order the site wa
 
 
 
+## 5. Backend and API
+
+### 5.1 Server Setup
+
+The server is a Node.js application using Express.
+
+The following command installs the dependencies:
+
+```bash
+npm install express mysql2 dotenv
+```
+
+The following command starts the server:
+
+```bash
+npm start 
+```
+
+### 5.2 Backend Implementation
+
+Table 2 lists the API endpoint and Table 3 summarises the backend functions described below.
+
+| Endpoint | Method | Parameters | Returns |
+| --- | --- | --- | --- |
+| `/api/search` | POST | `postcodes`, `category` | `coords`, `places`, `midpoint` |
+
+Table 1: API endpoints
+
+| Function | File | Description |
+| --- | --- | --- |
+| `parseInput` | `backend.js` | Validates the user's input |
+| `getGeoCode` | `api.js` | Lookup postcodes through postcodes.io |
+| `findMidPoint` | `backend.js` | Calculates the average of everyone's lat/lon |
+| `findNearestPlaces` | `backend.js` | Queries MySQL for POIs nearest to the midpoint |
+| `routes` | `backend.js` | Gets each person's journey through TfL |
+| `getJourneyPlan` | `api.js` | Calls the TfL Journey Planner API |
+
+Table 2: Backend functions
+
+The frontend collects the user’s postcodes and the chosen venue category and packages them into a JSON object that is sent in a POST request to the `/api/search` endpoint. The Express server receives the request and the `express.json()` middleware parses the body. The body is passed into the `parseInput` function in `backend.js`, which ensures that the inputs are formatted correctly, i.e. that none of the postcode fields are left empty and that the category selected is a valid one. 
+
+Once parsed, the postcodes are then passed into the `getGeoCode` function in `api.js`. This function calls the postcodes.io API and sends it the postcodes in a JSON object. The postcodes.io API returns a JSON object that contains the latitudes and longitudes for each postcode. If some postcodes could not be identified or are situated outside of London, the function throws an error. The `getGeoCode` function returns an array of objects that contains the postcodes and their corresponding latitudes and longitudes.
+
+The geometrical midpoint is found by calculating the average of the latitudes and longitudes. This midpoint and the category are then used to query the MySQL database of all the places of interest in London. The `findNearestPlaces` function queries for the POIs of the corresponding category and ranks them based on their Euclidean distance from the midpoint and chooses the 3 POIs nearest to the midpoint (or 8 if the category selected is “all”). The function returns the details of the chosen POIs.
+
+For each chosen POI, the `routes` function in `backend.js` passes the coordinates of the POI in the {to} parameter and passes the coordinates of each person in the {from} parameter to a TfL Journey Planner API call in the `getJourneyPlan` function in `api.js`. The TfL API key is stored in an `.env` file that is never shared to the frontend. The `getJourneyPlan` function throws an error if the server is missing a TfL API key, if the request times out (15 second timeout) or if the request fails. If TfL reports that no route exists between a person and a POI, the `getJourneyPlan` function returns `null`, which means `routes` returns `null`, resulting in the `search` function ignoring that POI. An error isn't thrown here since other POIs can still be suitable and throwing an error would break the loop and not return anything. For each remaining POI, the TfL API returns several possible journeys for each person, the fastest one is selected and only the relevant information is kept. 
+
+The `search` function is the function called by the POST request from the frontend and it returns `coords` (an array of objects containing each person's postcode and lat/lon), `places` (an array with one object per POI), and the `midpoint`. Each object in `places` contains the information of the POIs the frontend needs, the name, postcode, category, lat, lon, opening hours, and the output of the `routes` function which contains the travel time, departure time, arrival time and the legs for each person's journey. The frontend displays the POI nearest to the midpoint by default and switches the displayed routes when the user selects another POI.
+
+
 ## 7. Conclusion
 
 ### 7.1 Evaluation
@@ -65,7 +115,12 @@ With more time, the top priority would be the algorithm. Venues could be ranked 
 
 4. Transport for London (2026). Unified API. <https://tfl.gov.uk/info-for/open-data-users/unified-api> [Accessed 13 Nov. 2026].
 
+5. postcodes.io. (n.d.). *Postcodes.Io*. [online] Available at: https://postcodes.io/ [Accessed 5 Nov. 2026].
 
+6. Transport For London - API. (2024). *Home*. [online] Transport for London - API. Available at: https://api-portal.tfl.gov.uk/ [Accessed 5 Nov. 2026].
+
+7. overpass-turbo.eu. (n.d.). *Overpass Turbo*. [online] Available at: https://overpass-turbo.eu/ [Accessed 5 Nov. 2026].
+   
 ----
 
 ## Declaration of Authorship
@@ -75,4 +130,4 @@ We, Qingshan Zhang, Anthony Xie, Monong Yang, Jinhao Zhong, confirm that the wor
 
 Digitally Sign with Your name Here
 
-ASSESSMENT DATE 13/Nov/2026
+ASSESSMENT DATE 13 Nov 2026
