@@ -306,7 +306,6 @@ th {
 }
 
 
-/* V2.0 — added map. */
 .mapwrap {
     position: relative;
     min-width: 0;
@@ -579,7 +578,7 @@ body {
     padding-left: 3px;
 }
 
-/* ---------- Places list in the sidebar ---------- */
+/* Places list in the sidebar */
 .places {
     flex: 1;
     min-height: 0;
@@ -698,7 +697,7 @@ body {
     background: #e9ecef;
 }
 
-/* ---------- Searching radar (middle of the map) ---------- */
+/* Searching radar (middle of the map) */
 .searching {
     position: absolute;
     left: 0;

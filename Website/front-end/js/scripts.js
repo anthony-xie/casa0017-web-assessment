@@ -113,8 +113,7 @@ let routeLabelsActive = false;
 let routeIntroTooltips = [];
 const placesCache = new Map();
 
-/* ---------- messages ---------- */
-
+//messages
 // type: 'info' (grey) or 'error'. Empty text hides the message.
 function showMessage(text, type = 'info') {
     $message.attr('data-type', text ? type : '').text(text);
@@ -165,8 +164,7 @@ function setSearching(on, point) {
     }
 }
 
-/* ---------- intro overlay ---------- */
-
+//intro overlay
 let introDismissed = false;
 
 function dismissIntro() {
@@ -179,8 +177,7 @@ function dismissIntro() {
 $list.on('focusin', dismissIntro);
 $('#intro').on('click', dismissIntro);
 
-/* ---------- "my location" button ---------- */
-
+// "my location" button
 const LocateControl = L.Control.extend({
     options: { position: 'topright' },
 
@@ -234,8 +231,7 @@ map.on('locationerror', () => {
     showMessage('We couldn’t get your location. Check that location access is allowed for this page.', 'error');
 });
 
-/* ---------- input rows ---------- */
-
+//input rows
 function addRow() {
     const $row = $('<div class="postcode-row">');
 
@@ -276,8 +272,7 @@ function createPopup(title, text) {
 }
 
 
-/* ---------- place pins and the list in the sidebar ---------- */
-
+//place pins and the list in the sidebar
 function placePinIcon(kind) {
     const type = PLACE_TYPES[kind];
     return L.divIcon({
@@ -629,8 +624,7 @@ map.on('zoomend', () => {
     });
 });
 
-/* ---------- real road routes (OSRM public demo server) ---------- */
-
+//real road routes (OSRM public demo server)
 // Remove invalid and duplicate consecutive points (they make SnakeAnim produce NaN)
 function cleanRoute(points, from, to) {
     const cleaned = points.filter(([lat, lng], i) =>
@@ -725,7 +719,7 @@ function animateRoutes(routes, token, colors, tooltips) {
     });
 }
 
-// Tooltip for one person's route, e.g. "Person 1 · 18 min" / "E15 2RA: walking → tube → walking"
+// Tooltip for one person's route
 function routeTooltip(route) {
     // createPopup builds the content with .text(), so the postcode cannot inject HTML
     return createPopup(`${route.minutes} min`);
@@ -834,8 +828,7 @@ function drawRoutesTo(place) {
     return animateRoutes(routes, token, searchState.colors, tooltips);
 }
 
-/* ---------- main ---------- */
-
+//main 
 async function findMeetingPlace() {
     // Keep each person's original position so numbering stays correct
     const entries = $list.find('.postcode-input')
