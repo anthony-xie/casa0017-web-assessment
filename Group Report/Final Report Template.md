@@ -15,7 +15,7 @@ Team authors: Qingshan Zhang, Anthony Xie, Monong Yang, Jinhao Zhong
 
 ## *Abstract*
 
-*“Find a Place” is a website that helps a group of people living in different parts of London decide where to meet. Users enter between two and six postcodes and choose a venue type. The site locates the midpoint of the group and selects nearby venues from a database built on OpenStreetMap. It then uses the Transport for London Unified API to plan each person's journey. Any venue that someone cannot reach is removed. The front end and the Node.js back end were developed separately, then integrated and refined. The result is a simple, map-based tool that gives a group a shared starting point for choosing a place. Future work would rank venues by travel time instead of distance, making the suggestions fairer.*
+*“Find a Place” is a website that helps a group of people living in different parts of London decide where to meet. Users enter between two and six postcodes and choose a venue type. The site locates the midpoint of the group and selects nearby venues from a database built on OpenStreetMap. It then uses the Transport for London Unified API to plan each person's journey. Any venue that someone cannot reach is removed. The frontend and the Node.js backend were developed separately, then integrated and refined. The result is a simple, map-based tool that gives a group a shared starting point for choosing a place. Future work would rank venues by travel time instead of distance, making the suggestions fairer.*
 
 
 ## 1. Introduction
@@ -52,7 +52,7 @@ Find a Place draws on three open data sources (Table 1). Candidate meeting place
 
 ### 2.2 Collection and Cleaning
 
-Venues were collected once and stored in MySQL, because they change slowly and querying Overpass on every search would be slow and exposed to rate limits. Journeys, by contrast, depend on each group's origins and cannot be prepared in advance, so the back end requests one route per person from TfL at search time.
+Venues were collected once and stored in MySQL, because they change slowly and querying Overpass on every search would be slow and exposed to rate limits. Journeys, by contrast, depend on each group's origins and cannot be prepared in advance, so the backend requests one route per person from TfL at search time.
 
 The Overpass query used `out center`, reducing building and park polygons to a single centre point, and kept only named elements, which removed 1,741 unnamed places and 20 untagged ones. The tab-separated export was imported with `LOAD DATA LOCAL INFILE`, with `NULLIF` converting empty strings to NULL. Remaining problems were fixed in SQL: rows with mixed tags (such as a cemetery also tagged as a park) were deleted if their category fell outside the five, single-character names were removed, duplicate IDs were rejected by the primary key, and two venues whose opening hours contained line breaks were repaired. The final table holds 21,114 venues: about 8,960 restaurants, 6,650 cafés, 3,140 pubs, 1,960 parks and 395 libraries.
 
@@ -60,11 +60,11 @@ OSM is crowdsourced and uneven: in the raw export only 59.2% of features had a p
 
 ### 2.3 Database Design
 
-The `findaplace` database runs on MySQL 8.4 with the utf8mb4 character set, so venue names in any script are stored correctly. Its core table, `osm_venues` (Table 2), holds one row per venue: coordinates, name, category, optional descriptive tags and a `fetched_at` timestamp that defaults to the time the row was imported. The OSM `amenity` and `leisure` tags were merged into a single `category` column holding one of five values (`restaurant`, `cafe`, `pub`, `park`, `library`), so the back end can filter any venue type with one condition.
+The `findaplace` database runs on MySQL 8.4 with the utf8mb4 character set, so venue names in any script are stored correctly. Its core table, `osm_venues` (Table 2), holds one row per venue: coordinates, name, category, optional descriptive tags and a `fetched_at` timestamp that defaults to the time the row was imported. The OSM `amenity` and `leisure` tags were merged into a single `category` column holding one of five values (`restaurant`, `cafe`, `pub`, `park`, `library`), so the backend can filter any venue type with one condition.
 
-The primary key is the pair `(osm_type, osm_id)` rather than `osm_id` alone, because OSM numbers nodes and ways independently and one ID can refer to two different objects. The back end finds candidates with a bounding-box query covering about 3 km around the group's midpoint, then orders them by distance; narrow the search by latitude without scanning all rows without scanning all 21,114 rows. Free-text tags such as opening hours and website use `VARCHAR(255)`, OSM's maximum tag length, while fields with predictable lengths, such as postcode and street, use shorter columns.
+The primary key is the pair `(osm_type, osm_id)` rather than `osm_id` alone, because OSM numbers nodes and ways independently and one ID can refer to two different objects. The backend finds candidates with a bounding-box query covering about 3 km around the group's midpoint, then orders them by distance; narrow the search by latitude without scanning all rows without scanning all 21,114 rows. Free-text tags such as opening hours and website use `VARCHAR(255)`, OSM's maximum tag length, while fields with predictable lengths, such as postcode and street, use shorter columns.
 
-The back end connects through Node.js `mysql2` with a dedicated account, `findaplace_app`, limited to SELECT, INSERT, UPDATE and DELETE. Credentials stay in an `.env` file excluded from GitHub, and every query is parameterised to prevent SQL injection.
+The backend connects through Node.js `mysql2` with a dedicated account, `findaplace_app`, limited to SELECT, INSERT, UPDATE and DELETE. Credentials stay in an `.env` file excluded from GitHub, and every query is parameterised to prevent SQL injection.
 
 | Key | Column | Type | Null | Default |
 | --- | --- | --- | --- | --- |
@@ -97,7 +97,6 @@ The journey begins with a short slogan on the map explaining the service. Users 
 
 We removed registration because accounts are unnecessary for this task. We use UK postcodes rather than free-text addresses because they are a familiar location reference in our London-focused context. The six-person limit keeps the process manageable; larger groups can search in smaller subgroups. We do not ask users to choose a transport mode because journey times are comparative references, not live travel guarantees. Recognisable icons and short labels also reduce reliance on written instructions.
 
-![select_location](/assets/images/select_location.png)
 
 ### 3.2 From Wireframes to Final Interface
 
@@ -120,7 +119,7 @@ The map is the main results area. Before a search, a short slogan uses the other
 
 Our visual design takes inspiration from familiar mapping services, particularly Apple Maps and Google Maps. A minimal colour palette, clear typography and straightforward layout keep attention on the map. We avoided heavily styling the map because users should recognise it immediately and understand its symbols and routes.
 
-The front end uses standard HTML, CSS and JavaScript rather than a large framework. Leaflet provides the interactive map, while custom CSS controls the layout and appearance. Recognisable icons communicate venue categories and actions quickly, reducing reliance on lengthy text. The logo follows the same simple visual language.
+The frontend uses standard HTML, CSS and JavaScript rather than a large framework. Leaflet provides the interactive map, while custom CSS controls the layout and appearance. Recognisable icons chosen from Bootstrap Icons (Bootstrap, n.d) communicate venue categories and actions quickly, reducing reliance on lengthy text. The logo follows the same simple visual language.
 
 We also made a basic mobile adaptation. On narrower screens, the map appears above the control panel, so users can see geographical results first and access the inputs below.
 
@@ -128,14 +127,14 @@ We also made a basic mobile adaptation. On narrower screens, the map appears abo
 
 ### 4.1 Functional Logic and User Inputs
 
-Find a Place follows an input–process–result flow. Users enter two to six UK postcodes, select a venue category and press Find. The back end validates the postcodes, obtains their coordinates and calculates the group's geographical midpoint. It then searches the local venue database for nearby places and requests TfL journeys from each participant to each candidate.
+Find a Place follows an input–process–result flow. Users enter two to six UK postcodes, select a venue category and press Find. The backend validates the postcodes, obtains their coordinates and calculates the group's geographical midpoint. It then searches the local venue database for nearby places and requests TfL journeys from each participant to each candidate.
 
 A loading state appears while the search runs. The map then displays available venues and routes. Venues that cannot be reached by every participant are excluded. For each remaining venue, the fastest journey returned for each person provides a travel-time reference. Users can inspect alternatives by selecting a map marker or its matching item in the side panel.
 
 We deliberately limit the choices: there is no account, free-text address field, departure-time setting or transport-mode selector. The website is intended for advance planning, so journey times are indicative rather than real-time guarantees. The task therefore remains simple: enter postcodes, choose a category and search.
 
 ![select_location](/assets/images/select_location.png)
-*Figure 4: Input panel and interaction flow.*
+*Figure 1: Input panel and interaction flow.*
 
 ### 4.2 Map and Result Visualisation
 
@@ -148,11 +147,18 @@ After a search, travel-time information appears briefly (around two seconds) and
 Together, these cues help users compare journey times and understand how accessible each venue may be for different participants. The map does not claim that a result is perfectly fair; it makes location and journey information easier to compare.
 
 ![select_location](/assets/images/select_location.png)
-*Figure 5: Result view showing the suggested venue and each participant's travel route and journey time.*
+*Figure 2: Result view showing the suggested venue and each participant's travel route and journey time.*
 
 ## 5. Backend and API
 
-### 5.1 Server Setup
+### 5.1 System Architecture
+
+Figure 3 shows the system architecture of Find a Place and how a search request moves between its components.
+
+![system_architecture](/assets/images/system_architecture.png)
+*Figure 3: System architecture of Find a Place*
+
+### 5.2 Server Setup
 
 The server is a Node.js application using Express.
 
@@ -168,15 +174,15 @@ The following command starts the server:
 npm start 
 ```
 
-### 5.2 Backend Implementation
+### 5.3 Backend Implementation
 
-Table 2 lists the API endpoint and Table 3 summarises the backend functions described below.
+Table 3 lists the API endpoint and Table 4 summarises the backend functions described below.
 
 | Endpoint | Method | Parameters | Returns |
 | --- | --- | --- | --- |
 | `/api/search` | POST | `postcodes`, `category` | `coords`, `places`, `midpoint` |
 
-Table 1: API endpoints
+Table 3: API endpoints
 
 | Function | File | Description |
 | --- | --- | --- |
@@ -187,7 +193,7 @@ Table 1: API endpoints
 | `routes` | `backend.js` | Gets each person's journey through TfL |
 | `getJourneyPlan` | `api.js` | Calls the TfL Journey Planner API |
 
-Table 2: Backend functions
+Table 4: Backend functions
 
 The frontend collects the user’s postcodes and the chosen venue category and packages them into a JSON object that is sent in a POST request to the `/api/search` endpoint. The Express server receives the request and the `express.json()` middleware parses the body. The body is passed into the `parseInput` function in `backend.js`, which ensures that the inputs are formatted correctly, i.e. that none of the postcode fields are left empty and that the category selected is a valid one. 
 
@@ -204,7 +210,7 @@ The `search` function is the function called by the POST request from the fronte
 
 ### 6.1 Data Flow
 
-Figure [X] traces one search through the system; the functions involved are described in Section 5.2. The browser sends the group's postcodes and chosen category to `/api/search` as JSON. The Express server validates the input and passes the postcodes to postcodes.io, which returns their coordinates and confirms that each lies in London. The back end averages these into a midpoint, queries `osm_venues` for the nearest venues of that category, and requests a TfL journey from every person to every candidate. Venues that someone cannot reach are dropped, and the rest return to the browser with each person's fastest route, ready to be drawn on the map.
+Figure 4 traces one search through the system; the functions involved are described in Section 5.2. The browser sends the group's postcodes and chosen category to `/api/search` as JSON. The Express server validates the input and passes the postcodes to postcodes.io, which returns their coordinates and confirms that each lies in London. The backend averages these into a midpoint, queries `osm_venues` for the nearest venues of that category, and requests a TfL journey from every person to every candidate. Venues that someone cannot reach are dropped, and the rest return to the browser with each person's fastest route, ready to be drawn on the map.
 
 ```mermaid
 flowchart LR
@@ -217,20 +223,20 @@ flowchart LR
     G -->|JSON: coords, places, midpoint| H[Leaflet map<br/>markers and routes]
 ```
 
-*Figure [X]: data flow.*
+*Figure 4: Data flow.*
 
 ### 6.2 Integrating Frontend and Backend
 
-The front end and back end were developed in parallel, and each made its own assumptions. The front-end prototype worked entirely in the browser. It geocoded postcodes with postcodes.io, fetched venues live from three Overpass API mirrors and drew driving routes from the public OSRM server. The back end was written as a set of ES-module functions around MySQL and TfL, but no HTTP route called them, and the existing server, a plain Node `http` static file server, rejected every request except GET with a 405 error.
+The frontend and backend were developed in parallel, and each made its own assumptions. The frontend prototype worked entirely in the browser. It geocoded postcodes with postcodes.io, fetched venues live from three Overpass API mirrors and drew driving routes from the public OSRM server. The backend was written as a set of ES-module functions around MySQL and TfL, but no HTTP route called them, and the existing server, a plain Node `http` static file server, rejected every request except GET with a 405 error.
 
-Integration therefore moved every external call to the server. `server.js` was rewritten in Express to serve the front end as static files and expose a single `POST /api/search` endpoint, which returns errors as JSON with a matching status code. A root `package.json` added the dependencies and an `npm start` script. In `scripts.js`, over 200 lines of API code were replaced by one `fetch` to this endpoint, so the browser contacts no third-party service, the TfL key stays on the server, and routes follow public transport rather than roads. A category menu was added whose values match the list the back end accepts.
+Integration therefore moved every external call to the server. `server.js` was rewritten in Express to serve the frontend as static files and expose a single `POST /api/search` endpoint, which returns errors as JSON with a matching status code. A root `package.json` added the dependencies and an `npm start` script. In `scripts.js`, over 200 lines of API code were replaced by one `fetch` to this endpoint, so the browser contacts no third-party service, the TfL key stays on the server, and routes follow public transport rather than roads. A category menu was added whose values match the list the backend accepts.
 
-Agreeing the response format (Section 5.2) exposed several mismatches. The SQL selected `type` and `id`, which do not exist in `osm_venues`, causing 500 errors; the front end read `pois` and `leg.path`, while the back end sent `places` and no route geometry; and the midpoint, needed to start the map animation, was not returned. The back end now returns the midpoint and converts each TfL leg's `lineString`, a JSON string of [lat, lon] pairs, into a `pathLine` array that Leaflet draws without conversion.
+Agreeing the response format (Section 5.2) exposed several mismatches. The SQL selected `type` and `id`, which do not exist in `osm_venues`, causing 500 errors; the frontend read `pois` and `leg.path`, while the backend sent `places` and no route geometry; and the midpoint, needed to start the map animation, was not returned. The backend now returns the midpoint and converts each TfL leg's `lineString`, a JSON string of [lat, lon] pairs, into a `pathLine` array that Leaflet draws without conversion.
 
 
 ### 6.3 Adjustments and User Testing
 
-Testing after integration exposed problems on both sides (Table 5). On the back end, the original server rejected POST requests with a 405 error, so it was rebuilt on Express, and searches in the "All" category returned too few venues, so the result limit was raised to eight in that case. Most remaining changes concerned the map. Routes and the midpoint marker swelled during zoom animations until a custom SVG renderer was written to redraw them on every frame, and some route animations ended instantly or crashed until every line was given the same 2.5-second duration and a divide-by-zero in the animation plugin was guarded. On narrow screens the map attribution was hidden behind the panel, and after a search the top result was not highlighted, so it is now selected automatically. 
+Testing after integration exposed problems on both sides (Table 5). On the backend, the original server rejected POST requests with a 405 error, so it was rebuilt on Express, and searches in the "All" category returned too few venues, so the result limit was raised to eight in that case. Most remaining changes concerned the map. Routes and the midpoint marker swelled during zoom animations until a custom SVG renderer was written to redraw them on every frame, and some route animations ended instantly or crashed until every line was given the same 2.5-second duration and a divide-by-zero in the animation plugin was guarded. On narrow screens the map attribution was hidden behind the panel, and after a search the top result was not highlighted, so it is now selected automatically. 
 | Issue found | Side | Change made |
 | --- | --- | --- |
 | POST requests rejected with 405 | Backend | Rewrote the server with Express |
@@ -276,6 +282,8 @@ With more time, the top priority would be the algorithm. Venues could be ranked 
 7. overpass-turbo.eu. (n.d.). *Overpass Turbo*. [online] Available at: https://overpass-turbo.eu/ [Accessed 5 Nov. 2026].
 
 8. OpenStreetMap contributors (2026). OpenStreetMap. Available at: https://www.openstreetmap.org [Accessed 15 Nov. 2026]
+
+9. Bootstrap (n.d.). Bootstrap icons. [online] icons.getbootstrap.com. Available at: https://icons.getbootstrap.com/ [Accessed 15 Nov. 2026].
    
 ----
 
