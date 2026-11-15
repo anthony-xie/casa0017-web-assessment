@@ -36,7 +36,54 @@ The website has three aims. Firstly, it should find a meeting place in the middl
 
 The following sections explain how these aims were met, in the order the site was built, integrated and refined.
 
-## 2.
+## 2. Data and Database
+
+### 2.1 Data Sources
+
+Find a Place draws on three open data sources (Table 1). Candidate meeting places come from OpenStreetMap (OSM) (OpenStreetMap contributors, 2026), extracted through the Overpass API (overpass-turbo.eu, n.d.) for Greater London in five categories: restaurants, cafés, pubs and libraries (OSM `amenity` tag) and parks (`leisure` tag). The postcode each person enters is converted to coordinates with postcodes.io (postcodes.io, n.d.), and their journey from that origin to a candidate venue is obtained from the Transport for London (TfL) Unified API (Transport for London, 2026), which returns the public transport route and its duration. OSM was preferred to commercial services such as Google Places because it is free, has no per-request charge, and its open licence allows the project to keep a complete local copy of the venues.
+
+| Source | What it provides | Used for | Licence | Link |
+| --- | --- | --- | --- | --- |
+| OpenStreetMap via Overpass API | Venue name, category, location; optional cuisine, opening hours, website and address | Candidate meeting places | ODbL, © OpenStreetMap contributors | https://overpass-turbo.eu |
+| TfL Unified API | Journey route for each person, including duration | Travel time calculation and route display | Powered by TfL Open Data | https://api.tfl.gov.uk |
+| postcodes.io | Latitude, longitude and region for each UK postcode | Locating each person's origin and checking it is in London | Open Government Licence (ONS Postcode Directory) | https://postcodes.io |
+
+*Table 1: Data sources used in Find a Place.*
+
+### 2.2 Collection and Cleaning
+
+Venues were collected once and stored in MySQL, because they change slowly and querying Overpass on every search would be slow and exposed to rate limits. Journeys, by contrast, depend on each group's origins and cannot be prepared in advance, so the back end requests one route per person from TfL at search time.
+
+The Overpass query used `out center`, reducing building and park polygons to a single centre point, and kept only named elements, which removed 1,741 unnamed places and 20 untagged ones. The tab-separated export was imported with `LOAD DATA LOCAL INFILE`, with `NULLIF` converting empty strings to NULL. Remaining problems were fixed in SQL: rows with mixed tags (such as a cemetery also tagged as a park) were deleted if their category fell outside the five, single-character names were removed, duplicate IDs were rejected by the primary key, and two venues whose opening hours contained line breaks were repaired. The final table holds 21,114 venues: about 8,960 restaurants, 6,650 cafés, 3,140 pubs, 1,960 parks and 395 libraries.
+
+OSM is crowdsourced and uneven: in the raw export only 59.2% of features had a postcode and 23.8% had opening hours. Rather than discard these venues, the site keeps them and shows "Opening hours not listed" on the venue card.
+
+### 2.3 Database Design
+
+The `findaplace` database runs on MySQL 8.4 with the utf8mb4 character set, so venue names in any script are stored correctly. Its core table, `osm_venues` (Table 2), holds one row per venue: coordinates, name, category, optional descriptive tags and a `fetched_at` timestamp that defaults to the time the row was imported. The OSM `amenity` and `leisure` tags were merged into a single `category` column holding one of five values (`restaurant`, `cafe`, `pub`, `park`, `library`), so the back end can filter any venue type with one condition.
+
+The primary key is the pair `(osm_type, osm_id)` rather than `osm_id` alone, because OSM numbers nodes and ways independently and one ID can refer to two different objects. The back end finds candidates with a bounding-box query covering about 3 km around the group's midpoint, then orders them by distance; the composite index on `(lat, lon)` lets MySQL narrow this box without scanning all 21,114 rows. Free-text tags such as opening hours and website use `VARCHAR(255)`, OSM's maximum tag length, while fields with predictable lengths, such as postcode and street, use shorter columns.
+
+The back end connects through Node.js `mysql2` with a dedicated account, `findaplace_app`, limited to SELECT, INSERT, UPDATE and DELETE. Credentials stay in an `.env` file excluded from GitHub, and every query is parameterised to prevent SQL injection.
+
+| Key | Column | Type | Null | Default |
+| --- | --- | --- | --- | --- |
+| PK | `osm_type` | VARCHAR(10) | NOT NULL | |
+| PK | `osm_id` | BIGINT | NOT NULL | |
+| IDX | `lat` | DOUBLE | NOT NULL | |
+| IDX | `lon` | DOUBLE | NOT NULL | |
+| | `name` | VARCHAR(150) | NOT NULL | |
+| | `category` | VARCHAR(100) | NULL | NULL |
+| | `cuisine` | VARCHAR(255) | NULL | NULL |
+| | `opening_hours` | VARCHAR(255) | NULL | NULL |
+| | `website` | VARCHAR(255) | NULL | NULL |
+| | `street` | VARCHAR(100) | NULL | NULL |
+| | `postcode` | VARCHAR(15) | NULL | NULL |
+| | `fetched_at` | DATETIME | NULL | CURRENT_TIMESTAMP |
+
+Indexes: `PRIMARY KEY (osm_type, osm_id)`; `INDEX idx_lat_lon (lat, lon)`. Engine: InnoDB, character set utf8mb4 (`utf8mb4_unicode_ci`).
+
+*Table 2: Structure of the `osm_venues` table.*
 
 
 
@@ -88,6 +135,35 @@ The geometrical midpoint is found by calculating the average of the latitudes an
 For each chosen POI, the `routes` function in `backend.js` passes the coordinates of the POI in the {to} parameter and passes the coordinates of each person in the {from} parameter to a TfL Journey Planner API call in the `getJourneyPlan` function in `api.js`. The TfL API key is stored in an `.env` file that is never shared to the frontend. The `getJourneyPlan` function throws an error if the server is missing a TfL API key, if the request times out (15 second timeout) or if the request fails. If TfL reports that no route exists between a person and a POI, the `getJourneyPlan` function returns `null`, which means `routes` returns `null`, resulting in the `search` function ignoring that POI. An error isn't thrown here since other POIs can still be suitable and throwing an error would break the loop and not return anything. For each remaining POI, the TfL API returns several possible journeys for each person, the fastest one is selected and only the relevant information is kept. 
 
 The `search` function is the function called by the POST request from the frontend and it returns `coords` (an array of objects containing each person's postcode and lat/lon), `places` (an array with one object per POI), and the `midpoint`. Each object in `places` contains the information of the POIs the frontend needs, the name, postcode, category, lat, lon, opening hours, and the output of the `routes` function which contains the travel time, departure time, arrival time and the legs for each person's journey. The frontend displays the POI nearest to the midpoint by default and switches the displayed routes when the user selects another POI.
+
+
+## 6. Integration and Iteration
+
+### 6.1 Data Flow
+
+Figure [X] traces one search through the system; the functions involved are described in Section 5.2. The browser sends the group's postcodes and chosen category to `/api/search` as JSON. The Express server validates the input and passes the postcodes to postcodes.io, which returns their coordinates and confirms that each lies in London. The back end averages these into a midpoint, queries `osm_venues` for the nearest venues of that category, and requests a TfL journey from every person to every candidate. Venues that someone cannot reach are dropped, and the rest return to the browser with each person's fastest route, ready to be drawn on the map.
+
+
+*Figure [X]: System architecture and data flow.*
+
+### 6.2 Integrating Frontend and Backend
+
+
+
+### 6.3 Adjustments and User Testing
+
+Testing after integration exposed problems on both sides (Table 5). On the back end, the original server rejected POST requests with a 405 error, so it was rebuilt on Express, and searches in the "All" category returned too few venues, so the result limit was raised to eight in that case. Most remaining changes concerned the map. Routes and the midpoint marker swelled during zoom animations until a custom SVG renderer was written to redraw them on every frame, and some route animations ended instantly or crashed until every line was given the same 2.5-second duration and a divide-by-zero in the animation plugin was guarded. On narrow screens the map attribution was hidden behind the panel, and after a search the top result was not highlighted, so it is now selected automatically. 
+| Issue found | Side | Change made |
+| --- | --- | --- |
+| POST requests rejected with 405 | Backend | Rewrote the server with Express |
+| "All" returned too few places | Backend | Result limit raised to 8 when "All" is selected |
+| Routes and midpoint marker grew during zoom animations | Frontend | Custom SVG renderer that redraws on every zoom frame |
+| Some route animations finished instantly or crashed | Frontend | Same 2.5 s duration for every line; divide-by-zero guarded in the animation plugin |
+| Map attribution hidden behind the panel on narrow screens | Frontend | Removed the fixed map minimum height on small screens |
+| Top result not highlighted after a search | Frontend | First place selected automatically |
+
+*Table 5: Issues found during integration and testing, and the changes made.*
+
 
 
 ## 7. Conclusion
