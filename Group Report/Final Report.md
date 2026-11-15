@@ -290,8 +290,7 @@ We, Qingshan Zhang, Anthony Xie, Monong Yang, Jinhao Zhong, confirm that the wor
 
 Digitally Sign with Your name Here: Anthony Xie, Monong Yang, Jinhao Zhong, Qingshan Zhang
 
-
-ASSESSMENT DATE 13 Nov 2026
+Date: 15th Nov 2026
 
 ## Declaration of Generative AI Use
 
