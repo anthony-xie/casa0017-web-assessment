@@ -87,9 +87,9 @@ Indexes: `PRIMARY KEY (osm_type, osm_id)`; `INDEX idx_lat_lon (lat, lon)`. Engin
 
 
 
-# 3. Design and User Experience
+## 3. Design and User Experience
 
-## 3.1 User Journey and Storyboard
+### 3.1 User Journey and Storyboard
 
 We designed Find a Place as a practical tool, making clarity, speed and ease of use our priorities. Users should understand its purpose and get a result without instructions or an account.
 
@@ -97,9 +97,9 @@ The journey begins with a short slogan on the map explaining the service. Users 
 
 We removed registration because accounts are unnecessary for this task. We use UK postcodes rather than free-text addresses because they are a familiar location reference in our London-focused context. The six-person limit keeps the process manageable; larger groups can search in smaller subgroups. We do not ask users to choose a transport mode because journey times are comparative references, not live travel guarantees. Recognisable icons and short labels also reduce reliance on written instructions.
 
-*Figure 2: Storyboard of the user journey, from opening the website to selecting a meeting venue.*
+![select_location](/assets/images/select_location.png)
 
-## 3.2 From Wireframes to Final Interface
+### 3.2 From Wireframes to Final Interface
 
 The design evolved from an initial three-page concept into a single-page interface. This was our most significant design change. Moving between pages would add steps and require users to remember information. We therefore brought postcode inputs, search controls and map results together, allowing the main task to be completed in one place.
 
@@ -109,15 +109,14 @@ The map is the main results area. Before a search, a short slogan uses the other
 
 **Initial wireframe:**
 
-[Insert initial wireframe here]
+![sketch](/assets/images/sketch.JPG)
 
 **Final interface:**
 
-[Insert final interface screenshot here]
+![find_solution](/assets/images/find_solution.png)
 
-*Figure 3: Find a Place interface: initial wireframe (a) and final implementation (b).*
 
-## 3.3 Visual Design Decisions
+### 3.3 Visual Design Decisions
 
 Our visual design takes inspiration from familiar mapping services, particularly Apple Maps and Google Maps. A minimal colour palette, clear typography and straightforward layout keep attention on the map. We avoided heavily styling the map because users should recognise it immediately and understand its symbols and routes.
 
@@ -125,9 +124,9 @@ The front end uses standard HTML, CSS and JavaScript rather than a large framewo
 
 We also made a basic mobile adaptation. On narrower screens, the map appears above the control panel, so users can see geographical results first and access the inputs below.
 
-# 4. Interactivity and Visualisation
+## 4. Interactivity and Visualisation
 
-## 4.1 Functional Logic and User Inputs
+### 4.1 Functional Logic and User Inputs
 
 Find a Place follows an input–process–result flow. Users enter two to six UK postcodes, select a venue category and press Find. The back end validates the postcodes, obtains their coordinates and calculates the group's geographical midpoint. It then searches the local venue database for nearby places and requests TfL journeys from each participant to each candidate.
 
@@ -135,9 +134,10 @@ A loading state appears while the search runs. The map then displays available v
 
 We deliberately limit the choices: there is no account, free-text address field, departure-time setting or transport-mode selector. The website is intended for advance planning, so journey times are indicative rather than real-time guarantees. The task therefore remains simple: enter postcodes, choose a category and search.
 
+![select_location](/assets/images/select_location.png)
 *Figure 4: Input panel and interaction flow.*
 
-## 4.2 Map and Result Visualisation
+### 4.2 Map and Result Visualisation
 
 The map is the main area for exploring results. Each suggested venue has a marker, and routes to the selected venue are drawn on the map. Users can therefore see the geographical relationship between the group and each option in one view.
 
@@ -147,6 +147,7 @@ After a search, travel-time information appears briefly (around two seconds) and
 
 Together, these cues help users compare journey times and understand how accessible each venue may be for different participants. The map does not claim that a result is perfectly fair; it makes location and journey information easier to compare.
 
+![select_location](/assets/images/select_location.png)
 *Figure 5: Result view showing the suggested venue and each participant's travel route and journey time.*
 
 ## 5. Backend and API
