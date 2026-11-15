@@ -251,7 +251,7 @@ The main limitation is the midpoint itself. A geometric midpoint is not always t
 
 ### 7.3 Future Work
 
-With more time, the top priority would be the algorithm. Venues could be ranked by travel time, by minimising either the longest journey in the group or the difference between journeys, which would bring the site closer to a fair result. TfL results could be cached to speed up searches, and each person's travel time could be shown on the venue cards. Users could also choose a departure time and travel mode. A place name search could be added alongside postcode entry to enhance the user experience. The venue data could be refreshed regularly. The interface is already simple, so new features would be added only where they are clearly needed. If the site works well, it could be extended from London to the rest of the UK.
+With more time, the top priority would be the algorithm. Venues could be ranked by travel time, by minimising either the longest journey in the group or the difference between journeys, which would bring the site closer to a fair result. Ratings for each place could also be included in the ranking, helping the site recommend places that are both convenient to reach and highly rated. TfL results could be cached to speed up searches, and each person's travel time could be shown on the venue cards. Users could also choose a departure time and travel mode. A place name search could be added alongside postcode entry to enhance the user experience. The venue data could be refreshed regularly. The interface is already simple, so new features would be added only where they are clearly needed. If the site works well, it could be extended from London to the rest of the UK.
 
 
 ## Bibliography
@@ -284,3 +284,7 @@ Digitally Sign with Your name Here
 
 
 ASSESSMENT DATE 13 Nov 2026
+
+## Declaration of Generative AI Use
+
+We acknowledge the use of ChatGPT (OpenAI, https://chatgpt.com) and Claude (Anthropic, https://claude.ai) as supporting tools during this project. These tools were used to assist with understanding technical concepts, code development and debugging, and improving the clarity and language of written content. AI-generated suggestions were reviewed and adapted by the team, and we take full responsibility for the final submitted work.
