@@ -221,6 +221,11 @@ flowchart LR
 
 ### 6.2 Integrating Frontend and Backend
 
+The front end and back end were developed in parallel, and each made its own assumptions. The front-end prototype worked entirely in the browser. It geocoded postcodes with postcodes.io, fetched venues live from three Overpass API mirrors and drew driving routes from the public OSRM server. The back end was written as a set of ES-module functions around MySQL and TfL, but no HTTP route called them, and the existing server, a plain Node `http` static file server, rejected every request except GET with a 405 error.
+
+Integration therefore moved every external call to the server. `server.js` was rewritten in Express to serve the front end as static files and expose a single `POST /api/search` endpoint, which returns errors as JSON with a matching status code. A root `package.json` added the dependencies and an `npm start` script. In `scripts.js`, over 200 lines of API code were replaced by one `fetch` to this endpoint, so the browser contacts no third-party service, the TfL key stays on the server, and routes follow public transport rather than roads. A category menu was added whose values match the list the back end accepts.
+
+Agreeing the response format (Section 5.2) exposed several mismatches. The SQL selected `type` and `id`, which do not exist in `osm_venues`, causing 500 errors; the front end read `pois` and `leg.path`, while the back end sent `places` and no route geometry; and the midpoint, needed to start the map animation, was not returned. The back end now returns the midpoint and converts each TfL leg's `lineString`, a JSON string of [lat, lon] pairs, into a `pathLine` array that Leaflet draws without conversion.
 
 
 ### 6.3 Adjustments and User Testing
