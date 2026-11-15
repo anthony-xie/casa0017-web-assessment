@@ -87,23 +87,6 @@ Indexes: `PRIMARY KEY (osm_type, osm_id)`; `INDEX idx_lat_lon (lat, lon)`. Engin
 
 
 
-## 5. Backend and API
-
-### 5.1 Server Setup
-
-The server is a Node.js application using Express.
-
-The following command installs the dependencies:
-
-```bash
-npm install express mysql2 dotenv
-```
-
-The following command starts the server:
-
-```bash
-npm start 
-```
 # 3. Design and User Experience
 
 ## 3.1 User Journey and Storyboard
@@ -165,6 +148,24 @@ After a search, travel-time information appears briefly (around two seconds) and
 Together, these cues help users compare journey times and understand how accessible each venue may be for different participants. The map does not claim that a result is perfectly fair; it makes location and journey information easier to compare.
 
 *Figure 5: Result view showing the suggested venue and each participant's travel route and journey time.*
+
+## 5. Backend and API
+
+### 5.1 Server Setup
+
+The server is a Node.js application using Express.
+
+The following command installs the dependencies:
+
+```bash
+npm install express mysql2 dotenv
+```
+
+The following command starts the server:
+
+```bash
+npm start 
+```
 
 ### 5.2 Backend Implementation
 
