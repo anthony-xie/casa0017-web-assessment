@@ -283,3 +283,7 @@ Digitally Sign with Your name Here
 
 
 ASSESSMENT DATE 13 Nov 2026
+
+## Declaration of Generative AI Use
+
+We acknowledge the use of ChatGPT (OpenAI, https://chatgpt.com) and Claude (Anthropic, https://claude.ai) as supporting tools during this project. These tools were used to assist with understanding technical concepts, code development and debugging, and improving the clarity and language of written content. AI-generated suggestions were reviewed and adapted by the team, and we take full responsibility for the final submitted work.
