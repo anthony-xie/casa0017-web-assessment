@@ -129,7 +129,7 @@ We, Qingshan Zhang, Anthony Xie, Monong Yang, Jinhao Zhong, confirm that the wor
 
 
 Digitally Sign with Your name Here
-        <img width="150" alt="YMN_Autograph" src="https://github.com/user-attachments/assets/d7926163-17a3-41c4-860d-fcd79370a1b1" />
+        
 
 
 ASSESSMENT DATE 13 Nov 2026
