@@ -106,13 +106,11 @@ We also simplified the visual language and reduced the number of decisions. In t
 
 The map is the main results area. Before a search, a short slogan uses the otherwise empty map space to explain the website; it disappears once users begin. This gives first-time visitors context without taking up space during the task. Overall, the final interface is more direct and focused than the original wireframe.
 
-**Initial wireframe:**
+| Initial Wireframe | Final Interface |
+|:---:|:---:|
+| ![Initial Wireframe](../assets/images/sketch.JPG) | ![Final Interface](../assets/images/find_solution.png) |
 
-![sketch](/assets/images/sketch.JPG)
-
-**Final interface:**
-
-![find_solution](/assets/images/find_solution.png)
+*Figure 1: Comparison between the initial wireframe (left) and final interface (right).*
 
 
 ### 3.3 Visual Design Decisions
@@ -133,8 +131,6 @@ A loading state appears while the search runs. The map then displays available v
 
 We deliberately limit the choices: there is no account, free-text address field, departure-time setting or transport-mode selector. The website is intended for advance planning, so journey times are indicative rather than real-time guarantees. The task therefore remains simple: enter postcodes, choose a category and search.
 
-![select_location](/assets/images/select_location.png)
-*Figure 1: Input panel and interaction flow.*
 
 ### 4.2 Map and Result Visualisation
 
@@ -292,7 +288,7 @@ With more time, the top priority would be the algorithm. Venues could be ranked 
 We, Qingshan Zhang, Anthony Xie, Monong Yang, Jinhao Zhong, confirm that the work presented in this assessment is our own. Where information has been derived from other sources, I confirm that this has been indicated in the work.
 
 
-Digitally Sign with Your name Here: Anthony Xie
+Digitally Sign with Your name Here: Anthony Xie, Monong Yang
 
 
 ASSESSMENT DATE 13 Nov 2026
