@@ -104,6 +104,67 @@ The following command starts the server:
 ```bash
 npm start 
 ```
+# 3. Design and User Experience
+
+## 3.1 User Journey and Storyboard
+
+We designed Find a Place as a practical tool, making clarity, speed and ease of use our priorities. Users should understand its purpose and get a result without instructions or an account.
+
+The journey begins with a short slogan on the map explaining the service. Users collect their group's postcodes, enter between two and six, choose a venue category and press Find. Suggested venues and routes then appear on the map. Users compare the options, select a venue and note its name and address to share with the group.
+
+We removed registration because accounts are unnecessary for this task. We use UK postcodes rather than free-text addresses because they are a familiar location reference in our London-focused context. The six-person limit keeps the process manageable; larger groups can search in smaller subgroups. We do not ask users to choose a transport mode because journey times are comparative references, not live travel guarantees. Recognisable icons and short labels also reduce reliance on written instructions.
+
+*Figure 2: Storyboard of the user journey, from opening the website to selecting a meeting venue.*
+
+## 3.2 From Wireframes to Final Interface
+
+The design evolved from an initial three-page concept into a single-page interface. This was our most significant design change. Moving between pages would add steps and require users to remember information. We therefore brought postcode inputs, search controls and map results together, allowing the main task to be completed in one place.
+
+We also simplified the visual language and reduced the number of decisions. In the final version, users enter postcodes, choose a venue category and press Find. We removed the proposed transport-mode selector because it added complexity without being essential to our intended comparison. We also retained a familiar map appearance instead of applying a heavily customised style, so users can recognise standard map symbols, routes and spatial relationships.
+
+The map is the main results area. Before a search, a short slogan uses the otherwise empty map space to explain the website; it disappears once users begin. This gives first-time visitors context without taking up space during the task. Overall, the final interface is more direct and focused than the original wireframe.
+
+**Initial wireframe:**
+
+[Insert initial wireframe here]
+
+**Final interface:**
+
+[Insert final interface screenshot here]
+
+*Figure 3: Find a Place interface: initial wireframe (a) and final implementation (b).*
+
+## 3.3 Visual Design Decisions
+
+Our visual design takes inspiration from familiar mapping services, particularly Apple Maps and Google Maps. A minimal colour palette, clear typography and straightforward layout keep attention on the map. We avoided heavily styling the map because users should recognise it immediately and understand its symbols and routes.
+
+The front end uses standard HTML, CSS and JavaScript rather than a large framework. Leaflet provides the interactive map, while custom CSS controls the layout and appearance. Recognisable icons communicate venue categories and actions quickly, reducing reliance on lengthy text. The logo follows the same simple visual language.
+
+We also made a basic mobile adaptation. On narrower screens, the map appears above the control panel, so users can see geographical results first and access the inputs below.
+
+# 4. Interactivity and Visualisation
+
+## 4.1 Functional Logic and User Inputs
+
+Find a Place follows an input–process–result flow. Users enter two to six UK postcodes, select a venue category and press Find. The back end validates the postcodes, obtains their coordinates and calculates the group's geographical midpoint. It then searches the local venue database for nearby places and requests TfL journeys from each participant to each candidate.
+
+A loading state appears while the search runs. The map then displays available venues and routes. Venues that cannot be reached by every participant are excluded. For each remaining venue, the fastest journey returned for each person provides a travel-time reference. Users can inspect alternatives by selecting a map marker or its matching item in the side panel.
+
+We deliberately limit the choices: there is no account, free-text address field, departure-time setting or transport-mode selector. The website is intended for advance planning, so journey times are indicative rather than real-time guarantees. The task therefore remains simple: enter postcodes, choose a category and search.
+
+*Figure 4: Input panel and interaction flow.*
+
+## 4.2 Map and Result Visualisation
+
+The map is the main area for exploring results. Each suggested venue has a marker, and routes to the selected venue are drawn on the map. Users can therefore see the geographical relationship between the group and each option in one view.
+
+Small interactive effects make the map easier to explore. When the pointer moves over a venue marker, it enlarges and displays the venue name. Users can select a venue either on the map or from its item in the side panel, supporting both spatial and list-based interaction. Hovering over a route reveals the relevant travel time.
+
+After a search, travel-time information appears briefly (around two seconds) and then fades. This provides an initial comparison without crowding the map with labels. It also encourages users to move the pointer over individual routes to inspect further details.
+
+Together, these cues help users compare journey times and understand how accessible each venue may be for different participants. The map does not claim that a result is perfectly fair; it makes location and journey information easier to compare.
+
+*Figure 5: Result view showing the suggested venue and each participant's travel route and journey time.*
 
 ### 5.2 Backend Implementation
 
