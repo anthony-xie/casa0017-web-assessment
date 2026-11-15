@@ -143,8 +143,18 @@ The `search` function is the function called by the POST request from the fronte
 
 Figure [X] traces one search through the system; the functions involved are described in Section 5.2. The browser sends the group's postcodes and chosen category to `/api/search` as JSON. The Express server validates the input and passes the postcodes to postcodes.io, which returns their coordinates and confirms that each lies in London. The back end averages these into a midpoint, queries `osm_venues` for the nearest venues of that category, and requests a TfL journey from every person to every candidate. Venues that someone cannot reach are dropped, and the rest return to the browser with each person's fastest route, ready to be drawn on the map.
 
+```mermaid
+flowchart LR
+    A[Browser<br/>postcodes + category] -->|POST /api/search| B[Express server<br/>validate input]
+    B --> C[postcodes.io<br/>coordinates, London check]
+    C --> D[Midpoint<br/>average lat/lon]
+    D --> E[(MySQL<br/>osm_venues)]
+    E -->|nearest venues| F[TfL Journey Planner<br/>one route per person per venue]
+    F --> G[Drop unreachable venues<br/>keep fastest route]
+    G -->|JSON: coords, places, midpoint| H[Leaflet map<br/>markers and routes]
+```
 
-*Figure [X]: System architecture and data flow.*
+*Figure [X]: data flow.*
 
 ### 6.2 Integrating Frontend and Backend
 
@@ -196,6 +206,8 @@ With more time, the top priority would be the algorithm. Venues could be ranked 
 6. Transport For London - API. (2024). *Home*. [online] Transport for London - API. Available at: https://api-portal.tfl.gov.uk/ [Accessed 5 Nov. 2026].
 
 7. overpass-turbo.eu. (n.d.). *Overpass Turbo*. [online] Available at: https://overpass-turbo.eu/ [Accessed 5 Nov. 2026].
+
+8. OpenStreetMap contributors (2026). OpenStreetMap. Available at: https://www.openstreetmap.org [Accessed 15 Nov. 2026]
    
 ----
 
