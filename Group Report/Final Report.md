@@ -11,7 +11,10 @@ date: "15 Nov 2026"
 # Find a Place
 
 Team Name: Chinese can fly  
-Team authors: Qingshan Zhang, Anthony Xie, Monong Yang, Jinhao Zhong
+Team authors: Qingshan Zhang, Anthony Xie, Monong Yang, Jinhao Zhong  
+Website: http://10.129.111.26:3001  
+GitHub Repository: https://github.com/anthony-xie/casa0017-web-assessment/tree/main 
+
 
 ## Table of Contents
 
