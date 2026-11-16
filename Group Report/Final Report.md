@@ -155,7 +155,7 @@ The map is the main results area. Before a search, a short slogan uses the other
 
 Our visual design takes inspiration from familiar mapping services, particularly Apple Maps and Google Maps. A minimal colour palette, clear typography and straightforward layout keep attention on the map. We avoided heavily styling the map because users should recognise it immediately and understand its symbols and routes.
 
-The frontend uses standard HTML, CSS and JavaScript rather than a large framework. Leaflet(Agafonkin, 2023) provides the interactive map, while custom CSS controls the layout and appearance. Recognisable icons chosen from Bootstrap Icons (Bootstrap, n.d) communicate venue categories and actions quickly, reducing reliance on lengthy text. The logo follows the same simple visual language.
+The frontend uses standard HTML, CSS and JavaScript rather than a large framework. Leaflet(Agafonkin, 2023) provides the interactive map, while custom CSS controls the layout and appearance. Recognisable icons chosen from Bootstrap Icons (Bootstrap, n.d.) communicate venue categories and actions quickly, reducing reliance on lengthy text. The logo follows the same simple visual language.
 
 We also made a basic mobile adaptation. On narrower screens, the map appears above the control panel, so users can see geographical results first and access the inputs below.
 
