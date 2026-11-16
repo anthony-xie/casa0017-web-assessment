@@ -40,7 +40,7 @@ GitHub Repository: https://github.com/anthony-xie/casa0017-web-assessment/tree/m
 - [6. Integration and Iteration](#6-integration-and-iteration)
   - [6.1 Data Flow](#61-data-flow)
   - [6.2 Integrating Frontend and Backend](#62-integrating-frontend-and-backend)
-  - [6.3 Adjustments and User Testing](#63-adjustments-and-user-testing)
+  - [6.3 Adjustments](#63-adjustments-and-user-testing)
 - [7. Conclusion](#7-conclusion)
   - [7.1 Evaluation](#71-evaluation)
   - [7.2 Limitations](#72-limitations)
@@ -268,7 +268,7 @@ Integration therefore moved every external call to the server. `server.js` was r
 Agreeing the response format (Section 5.3) exposed several mismatches. The SQL selected `type` and `id`, which do not exist in `osm_venues`, causing 500 errors; the frontend read `pois` and `leg.path`, while the backend sent `places` and no route geometry; and the midpoint, needed to start the map animation, was not returned. The backend now returns the midpoint and converts each TfL leg's `lineString`, a JSON string of [lat, lon] pairs, into a `pathLine` array that Leaflet draws without conversion.
 
 
-### 6.3 Adjustments and User Testing
+### 6.3 Adjustments
 
 Testing after integration exposed problems on both sides (Table 5). On the backend, the original server rejected POST requests with a 405 error, so it was rebuilt on Express, and searches in the "All" category returned too few venues, so the result limit was raised to eight in that case. Most remaining changes concerned the map. Routes and the midpoint marker swelled during zoom animations until a custom SVG renderer was written to redraw them on every frame, and some route animations ended instantly or crashed until every line was given the same 2.5-second duration and a divide-by-zero in the animation plugin was guarded. On narrow screens the map attribution was hidden behind the panel, and after a search the top result was not highlighted, so it is now selected automatically. 
 
